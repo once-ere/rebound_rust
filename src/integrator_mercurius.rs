@@ -402,7 +402,7 @@ fn reb_integrator_mercurius_kepler_step(r: &mut reb_simulation, dt: f64) {
     let mut particles = std::mem::take(&mut r.particles);
     let mut no_var: [reb_particle; 0] = [];
     for i in 1..N {
-        reb_integrator_whfast_kepler_solver(r, &mut particles, &mut no_var, i, mu, dt); // in dh
+        reb_integrator_whfast_kepler_solver(Some(&mut *r), &mut particles, &mut no_var, i, mu, dt); // in dh
     }
     r.particles = particles;
 }

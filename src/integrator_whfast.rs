@@ -246,8 +246,10 @@ fn effective_N_active(r: &reb_simulation) -> usize {
 /// orbit for time dt, plus the attached variational particles. The C
 /// takes a particle pointer and finds `pindex` by pointer arithmetic;
 /// warnings are emitted through `r` (the C casts away const for this).
+/// `r` may be `None` (the C passes NULL from TRACE) — then no warning
+/// is emitted and no variational particles are advanced.
 pub fn reb_integrator_whfast_kepler_solver(
-    r: &mut reb_simulation,
+    mut r: Option<&mut reb_simulation>,
     p_jh: &mut [reb_particle],
     p_jh_var: &mut [reb_particle],
     pindex: usize,
@@ -272,12 +274,16 @@ pub fn reb_integrator_whfast_kepler_solver(
         let sqrt_beta = beta.sqrt();
         invperiod = sqrt_beta * beta / (2. * M_PI * mu);
         X_per_period = 2. * M_PI / sqrt_beta;
-        if dt.abs() * invperiod > 1. && (r.messages_timestep_warning & 1) == 0 {
-            r.messages_timestep_warning |= 1;
-            reb_simulation_warning(
-                r,
-                "Possible convergence issue. Timestep in Kepler solver is larger than one orbital period.",
-            );
+        if dt.abs() * invperiod > 1. {
+            if let Some(rr) = r.as_deref_mut() {
+                if (rr.messages_timestep_warning & 1) == 0 {
+                    rr.messages_timestep_warning |= 1;
+                    reb_simulation_warning(
+                        rr,
+                        "Possible convergence issue. Timestep in Kepler solver is larger than one orbital period.",
+                    );
+                }
+            }
         }
         let dtr0i = dt * r0i;
         X = dtr0i * (1. - dtr0i * eta0 * 0.5 * r0i); // second order guess
@@ -413,8 +419,15 @@ pub fn reb_integrator_whfast_kepler_solver(
     }
 
     // Variations
-    for v in 0..r.var_config.len() {
-        let vc = r.var_config[v];
+    let n_var_config = match r.as_deref() {
+        Some(rr) => rr.var_config.len(),
+        None => 0,
+    };
+    for v in 0..n_var_config {
+        let vc = match r.as_deref() {
+            Some(rr) => rr.var_config[v],
+            None => continue,
+        };
         let dp1 = p_jh_var[pindex + vc.index];
         stiefel_Gs(&mut Gs, beta, X); // Recalculate (to get Gs[4] and Gs[5])
         let dr0 = (dp1.x * p1.x + dp1.y * p1.y + dp1.z * p1.z) * r0i;
@@ -630,12 +643,12 @@ pub fn reb_integrator_whfast_kepler_step(
                 if i < N_active {
                     eta += p_jh[i].m;
                 }
-                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt);
+                reb_integrator_whfast_kepler_solver(Some(&mut *r), p_jh, p_jh_var, i, eta * G, _dt);
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC => {
             for i in 1..N {
-                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt); // eta = m0
+                reb_integrator_whfast_kepler_solver(Some(&mut *r), p_jh, p_jh_var, i, eta * G, _dt); // eta = m0
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_WHDS => {
@@ -645,13 +658,13 @@ pub fn reb_integrator_whfast_kepler_step(
                 } else {
                     eta = m0;
                 }
-                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt);
+                reb_integrator_whfast_kepler_solver(Some(&mut *r), p_jh, p_jh_var, i, eta * G, _dt);
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
             eta = p_jh[0].m;
             for i in 1..N {
-                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt);
+                reb_integrator_whfast_kepler_solver(Some(&mut *r), p_jh, p_jh_var, i, eta * G, _dt);
             }
         }
         _ => {}

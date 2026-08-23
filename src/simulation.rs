@@ -164,6 +164,11 @@ pub fn reb_simulation_set_integrator(r: &mut reb_simulation, name: &str) {
                 crate::integrator_bs::reb_integrator_bs_state::default(),
             )
         }
+        "trace" => {
+            r.integrator = reb_integrator_state::trace(
+                crate::integrator_trace::reb_integrator_trace_state::default(),
+            )
+        }
         _ => reb_simulation_error(r, "Integrator not found."),
     }
 }
@@ -175,12 +180,18 @@ pub fn reb_integrator_did_add_particle(r: &mut reb_simulation) {
     if matches!(r.integrator, reb_integrator_state::mercurius(_)) {
         crate::integrator_mercurius::reb_integrator_mercurius_did_add_particle(r);
     }
+    if matches!(r.integrator, reb_integrator_state::trace(_)) {
+        crate::integrator_trace::reb_integrator_trace_did_add_particle(r);
+    }
 }
 
 /// Integrator `will_remove_particle` hook dispatch (same situation).
 pub fn reb_integrator_will_remove_particle(r: &mut reb_simulation, index: usize) {
     if matches!(r.integrator, reb_integrator_state::mercurius(_)) {
         crate::integrator_mercurius::reb_integrator_mercurius_will_remove_particle(r, index);
+    }
+    if matches!(r.integrator, reb_integrator_state::trace(_)) {
+        crate::integrator_trace::reb_integrator_trace_will_remove_particle(r, index);
     }
 }
 
@@ -320,6 +331,7 @@ pub fn reb_simulation_step(r: &mut reb_simulation) {
             crate::integrator_mercurius::reb_integrator_mercurius_step(r)
         }
         reb_integrator_state::bs(_) => crate::integrator_bs::reb_integrator_bs_step(r),
+        reb_integrator_state::trace(_) => crate::integrator_trace::reb_integrator_trace_step(r),
     }
 
     // Integrate other ODEs (simulation.c: user ODEs are advanced with a

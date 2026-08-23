@@ -12,6 +12,7 @@
 #include "integrator_eos.h"
 #include "integrator_mercurius.h"
 #include "integrator_bs.h"
+#include "integrator_trace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +44,7 @@ int main(int argc, char* argv[]){
     if (strncmp(integrator, "eos", 3)==0) real_integrator = "eos";
     if (strncmp(integrator, "mercurius", 9)==0) real_integrator = "mercurius";
     if (strncmp(integrator, "bs", 2)==0) real_integrator = "bs";
+    if (strncmp(integrator, "trace", 5)==0) real_integrator = "trace";
     void* state = reb_simulation_set_integrator(r, real_integrator);
     if (strcmp(integrator,"leapfrog")==0){
         struct reb_integrator_leapfrog_state* lf = state;
@@ -114,6 +116,20 @@ int main(int argc, char* argv[]){
         if (strcmp(integrator,"bs-tight")==0){ b->eps_abs = 1e-11; b->eps_rel = 1e-11; }
         if (strcmp(integrator,"bs-loose")==0){ b->eps_abs = 1e-6;  b->eps_rel = 1e-6; }
         if (strcmp(integrator,"bs-maxdt")==0){ b->max_dt = 0.02; }
+    }
+    if (strncmp(integrator, "trace", 5)==0){
+        struct reb_integrator_trace_state* tr = state;
+        /* trace           default (FULL_BS peri mode, r_crit_hill=3)
+         * trace-pbs       peri_mode = PARTIAL_BS
+         * trace-ias15     peri_mode = FULL_IAS15
+         * trace-hill1     r_crit_hill = 1
+         * trace-perinone  S_peri = switch_peri_none
+         * trace-eta001    peri_crit_eta = 0.01 (forces pericenter flags) */
+        if (strcmp(integrator,"trace-pbs")==0)      tr->peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS;
+        if (strcmp(integrator,"trace-ias15")==0)    tr->peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15;
+        if (strcmp(integrator,"trace-hill1")==0)    tr->r_crit_hill = 1;
+        if (strcmp(integrator,"trace-perinone")==0) tr->S_peri = reb_integrator_trace_switch_peri_none;
+        if (strcmp(integrator,"trace-eta001")==0)   tr->peri_crit_eta = 0.01;
     }
     r->G = 1.0;
     r->dt = 0.01;

@@ -29,6 +29,8 @@ fn main() {
         "mercurius"
     } else if integrator.starts_with("bs") {
         "bs"
+    } else if integrator.starts_with("trace") {
+        "trace"
     } else {
         integrator.as_str()
     };
@@ -146,6 +148,20 @@ fn main() {
                     b.eps_rel = 1e-6;
                 }
                 "bs-maxdt" => b.max_dt = 0.02,
+                _ => {}
+            }
+        }
+    }
+    if integrator.starts_with("trace") {
+        if let reb_integrator_state::trace(ref mut tr) = r.integrator {
+            use rebound_rs::integrator_trace::*;
+            // see the C twin for the pseudo-name catalogue
+            match integrator.as_str() {
+                "trace-pbs" => tr.peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_PARTIAL_BS,
+                "trace-ias15" => tr.peri_mode = REB_INTEGRATOR_TRACE_PERIMODE_FULL_IAS15,
+                "trace-hill1" => tr.r_crit_hill = 1.,
+                "trace-perinone" => tr.S_peri = Some(reb_integrator_trace_switch_peri_none),
+                "trace-eta001" => tr.peri_crit_eta = 0.01,
                 _ => {}
             }
         }

@@ -50,6 +50,7 @@ pub mod integrator_janus;
 pub mod integrator_eos;
 pub mod integrator_mercurius;
 pub mod integrator_bs;
+pub mod integrator_trace;
 
 pub use types::*;
 pub use tools::*;
