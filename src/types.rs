@@ -356,6 +356,21 @@ pub struct reb_simulation {
     /// Seed for the glibc-compatible `rand_r` generator (tools.rs).
     pub rand_seed: u32,
 
+    // Simulationarchive (simulationarchive.c / binarydata.c)
+    pub simulationarchive_version: i32,
+    pub simulationarchive_auto_interval: f64,
+    pub simulationarchive_auto_walltime: f64,
+    pub simulationarchive_auto_step: u64,
+    pub simulationarchive_next: f64,
+    pub simulationarchive_next_step: u64,
+    /// C: `char* simulationarchive_filename` (NULL when unset).
+    pub simulationarchive_filename: Option<String>,
+
+    // Units used by the python wrapper (serialized in binary files).
+    pub python_unit_l: u32,
+    pub python_unit_m: u32,
+    pub python_unit_t: u32,
+
     // Module selection
     pub collision: REB_COLLISION,
     pub boundary: REB_BOUNDARY,

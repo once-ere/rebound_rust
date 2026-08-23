@@ -87,7 +87,17 @@ pub fn reb_simulation_create() -> reb_simulation {
         megno_mean_Y: 0.,
         megno_initial_t: 0.,
         megno_n: 0,
-        rand_seed: reb_tools_get_rand_seed(),
+        simulationarchive_version: 5,
+        simulationarchive_auto_interval: 0.,
+        simulationarchive_auto_walltime: 0.,
+        simulationarchive_auto_step: 0,
+        simulationarchive_next: 0.,
+        simulationarchive_next_step: 0,
+        simulationarchive_filename: None,
+        python_unit_l: 0,
+        python_unit_m: 0,
+        python_unit_t: 0,
+        rand_seed:reb_tools_get_rand_seed(),
         collision: REB_COLLISION::NONE,
         boundary: REB_BOUNDARY::NONE,
         gravity: REB_GRAVITY::BASIC,
@@ -421,6 +431,9 @@ pub fn reb_simulation_integrate(r: &mut reb_simulation, tmax: f64) -> REB_STATUS
     }
     run_heartbeat(r);
     while reb_check_exit(r, tmax, &mut last_full_dt) < 0 {
+        if r.simulationarchive_filename.is_some() {
+            crate::simulationarchive::reb_simulationarchive_heartbeat(r);
+        }
         reb_simulation_step(r);
         run_heartbeat(r);
         if r.usleep > 0. {

@@ -727,6 +727,47 @@ pub fn reb_tools_solve_kepler_pal(h: f64, k: f64, lambda: f64, p: &mut f64, q: &
     }
 }
 
+/// tools.c `reb_tools_particle_to_pal`.
+pub fn reb_tools_particle_to_pal(
+    G: f64,
+    p: reb_particle,
+    primary: reb_particle,
+    a: &mut f64,
+    lambda: &mut f64,
+    k: &mut f64,
+    h: &mut f64,
+    ix: &mut f64,
+    iy: &mut f64,
+) {
+    let x = p.x - primary.x;
+    let y = p.y - primary.y;
+    let z = p.z - primary.z;
+    let vx = p.vx - primary.vx;
+    let vy = p.vy - primary.vy;
+    let vz = p.vz - primary.vz;
+    let mu = G * (p.m + primary.m);
+    let r2 = x * x + y * y + z * z;
+    let r = r2.sqrt();
+    let cx = y * vz - z * vy;
+    let cy = z * vx - x * vz;
+    let cz = x * vy - y * vx;
+    let c2 = cx * cx + cy * cy + cz * cz;
+    let c = c2.sqrt();
+    let chat = x * vx + y * vy + z * vz;
+
+    let fac = (2. / (1. + cz / c)).sqrt() / c;
+    *ix = -fac * cy;
+    *iy = fac * cx;
+    *k = c / mu * (vy - vz / (c + cz) * cy) - 1. / r * (x - z / (c + cz) * cx);
+    *h = c / mu * (-vx + vz / (c + cz) * cx) - 1. / r * (y - z / (c + cz) * cy);
+    let e2 = (*k) * (*k) + (*h) * (*h);
+    *a = c2 / (mu * (1. - e2));
+    let l = 1. - (1. - e2).sqrt();
+    *lambda = (-r * vx + r * vz * cx / (c + cz) - (*k) * chat / (2. - l))
+        .atan2(r * vy - r * vz * cy / (c + cz) + (*h) * chat / (2. - l))
+        - chat / c * (1. - l);
+}
+
 /// tools.c `reb_particle_from_pal`.
 pub fn reb_particle_from_pal(
     G: f64,

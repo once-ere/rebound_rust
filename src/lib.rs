@@ -52,6 +52,10 @@ pub mod integrator_mercurius;
 pub mod integrator_bs;
 pub mod integrator_trace;
 pub mod integrator_whfast512;
+pub mod derivatives;
+pub mod frequency_analysis;
+pub mod binarydata;
+pub mod simulationarchive;
 
 pub use types::*;
 pub use tools::*;
@@ -63,6 +67,10 @@ pub use simulation::*;
 pub use output::*;
 pub use transformations::*;
 pub use rotations::*;
+pub use derivatives::*;
+pub use frequency_analysis::*;
+pub use binarydata::*;
+pub use simulationarchive::*;
 
 /// Version of the C release this crate translates (rebound.c `reb_version_str`).
 pub const reb_version_str: &str = "5.1.1";
