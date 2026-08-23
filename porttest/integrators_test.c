@@ -10,6 +10,7 @@
 #include "integrator_saba.h"
 #include "integrator_janus.h"
 #include "integrator_eos.h"
+#include "integrator_mercurius.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +40,7 @@ int main(int argc, char* argv[]){
     if (strncmp(integrator, "saba", 4)==0) real_integrator = "saba";
     if (strncmp(integrator, "janus", 5)==0) real_integrator = "janus";
     if (strncmp(integrator, "eos", 3)==0) real_integrator = "eos";
+    if (strncmp(integrator, "mercurius", 9)==0) real_integrator = "mercurius";
     void* state = reb_simulation_set_integrator(r, real_integrator);
     if (strcmp(integrator,"leapfrog")==0){
         struct reb_integrator_leapfrog_state* lf = state;
@@ -86,6 +88,20 @@ int main(int argc, char* argv[]){
             es->phi0 = integrator[4]-'0';
             es->phi1 = integrator[6]-'0';
         }
+    }
+    if (strncmp(integrator, "mercurius", 9)==0){
+        struct reb_integrator_mercurius_state* mc = state;
+        /* mercurius          default (L_mercury, r_crit_hill=3, safe_mode)
+         * mercurius-usafe    safe_mode = 0
+         * mercurius-c4       Hernandez C4 switching function
+         * mercurius-c5       Hernandez C5 switching function
+         * mercurius-inf      infinitely differentiable switching function
+         * mercurius-hill01   r_crit_hill = 0.1 (no encounters: pure WH path) */
+        if (strcmp(integrator,"mercurius-usafe")==0)  mc->safe_mode = 0;
+        if (strcmp(integrator,"mercurius-c4")==0)     mc->L = reb_integrator_mercurius_L_C4;
+        if (strcmp(integrator,"mercurius-c5")==0)     mc->L = reb_integrator_mercurius_L_C5;
+        if (strcmp(integrator,"mercurius-inf")==0)    mc->L = reb_integrator_mercurius_L_infinity;
+        if (strcmp(integrator,"mercurius-hill01")==0) mc->r_crit_hill = 0.1;
     }
     r->G = 1.0;
     r->dt = 0.01;

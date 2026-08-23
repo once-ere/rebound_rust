@@ -152,17 +152,30 @@ pub fn reb_simulation_set_integrator(r: &mut reb_simulation, name: &str) {
                 crate::integrator_eos::reb_integrator_eos_state::default(),
             )
         }
+        "mercurius" => {
+            r.integrator = reb_integrator_state::mercurius(
+                crate::integrator_mercurius::reb_integrator_mercurius_state::default(),
+            )
+        }
         _ => reb_simulation_error(r, "Integrator not found."),
     }
 }
 
-/// Integrator `did_add_particle` hook dispatch. None of the currently
-/// ported integrators registers one (in C, only integrators outside
-/// this phase do).
-pub fn reb_integrator_did_add_particle(_r: &mut reb_simulation) {}
+/// Integrator `did_add_particle` hook dispatch (C: the
+/// `did_add_particle` member of the integrator vtable; of the ported
+/// integrators only MERCURIUS registers one).
+pub fn reb_integrator_did_add_particle(r: &mut reb_simulation) {
+    if matches!(r.integrator, reb_integrator_state::mercurius(_)) {
+        crate::integrator_mercurius::reb_integrator_mercurius_did_add_particle(r);
+    }
+}
 
 /// Integrator `will_remove_particle` hook dispatch (same situation).
-pub fn reb_integrator_will_remove_particle(_r: &mut reb_simulation, _index: usize) {}
+pub fn reb_integrator_will_remove_particle(r: &mut reb_simulation, index: usize) {
+    if matches!(r.integrator, reb_integrator_state::mercurius(_)) {
+        crate::integrator_mercurius::reb_integrator_mercurius_will_remove_particle(r, index);
+    }
+}
 
 /// simulation.c `run_heartbeat` — heartbeat wrapper with exit checks.
 fn run_heartbeat(r: &mut reb_simulation) {
@@ -296,6 +309,9 @@ pub fn reb_simulation_step(r: &mut reb_simulation) {
         reb_integrator_state::saba(_) => crate::integrator_saba::reb_integrator_saba_step(r),
         reb_integrator_state::janus(_) => crate::integrator_janus::reb_integrator_janus_step(r),
         reb_integrator_state::eos(_) => crate::integrator_eos::reb_integrator_eos_step(r),
+        reb_integrator_state::mercurius(_) => {
+            crate::integrator_mercurius::reb_integrator_mercurius_step(r)
+        }
     }
 
     if r.post_timestep_modifications.is_some() {
@@ -398,6 +414,9 @@ pub fn reb_simulation_synchronize(r: &mut reb_simulation) {
         }
         reb_integrator_state::eos(_) => {
             crate::integrator_eos::reb_integrator_eos_synchronize(r)
+        }
+        reb_integrator_state::mercurius(_) => {
+            crate::integrator_mercurius::reb_integrator_mercurius_synchronize(r)
         }
         _ => {}
     }

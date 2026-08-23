@@ -25,6 +25,8 @@ fn main() {
         "janus"
     } else if integrator.starts_with("eos") {
         "eos"
+    } else if integrator.starts_with("mercurius") {
+        "mercurius"
     } else {
         integrator.as_str()
     };
@@ -112,6 +114,20 @@ fn main() {
                     es.phi0 = (b[4] - b'0') as i32;
                     es.phi1 = (b[6] - b'0') as i32;
                 }
+            }
+        }
+    }
+    if integrator.starts_with("mercurius") {
+        if let reb_integrator_state::mercurius(ref mut mc) = r.integrator {
+            use rebound_rs::integrator_mercurius::*;
+            // see the C twin for the pseudo-name catalogue
+            match integrator.as_str() {
+                "mercurius-usafe" => mc.safe_mode = 0,
+                "mercurius-c4" => mc.L = reb_integrator_mercurius_L_C4,
+                "mercurius-c5" => mc.L = reb_integrator_mercurius_L_C5,
+                "mercurius-inf" => mc.L = reb_integrator_mercurius_L_infinity,
+                "mercurius-hill01" => mc.r_crit_hill = 0.1,
+                _ => {}
             }
         }
     }

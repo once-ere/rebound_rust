@@ -48,6 +48,7 @@ pub mod integrator_whfast;
 pub mod integrator_saba;
 pub mod integrator_janus;
 pub mod integrator_eos;
+pub mod integrator_mercurius;
 
 pub use types::*;
 pub use tools::*;

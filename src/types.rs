@@ -217,6 +217,7 @@ pub enum reb_integrator_state {
     saba(crate::integrator_saba::reb_integrator_saba_state),
     janus(crate::integrator_janus::reb_integrator_janus_state),
     eos(crate::integrator_eos::reb_integrator_eos_state),
+    mercurius(crate::integrator_mercurius::reb_integrator_mercurius_state),
 }
 
 impl reb_integrator_state {
@@ -230,6 +231,7 @@ impl reb_integrator_state {
             reb_integrator_state::saba(_) => "saba",
             reb_integrator_state::janus(_) => "janus",
             reb_integrator_state::eos(_) => "eos",
+            reb_integrator_state::mercurius(_) => "mercurius",
         }
     }
 }

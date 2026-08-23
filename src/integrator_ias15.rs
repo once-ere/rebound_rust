@@ -973,13 +973,28 @@ fn reb_integrator_ias15_step_try(
     true // Success.
 }
 
-/// integrator_ias15.c `reb_integrator_ias15_step`.
-pub fn reb_integrator_ias15_step(r: &mut reb_simulation) {
+/// integrator_ias15.c `reb_integrator_ias15_step` (state-explicit; the
+/// C `.step` callback takes `void* state`). MERCURIUS drives a private
+/// IAS15 instance through this during close encounters.
+pub fn reb_integrator_ias15_step_state(
+    r: &mut reb_simulation,
+    ias15: &mut reb_integrator_ias15_state,
+) {
     r.gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
     if r.N != 0 {
-        // Take the state out of the enum for the duration of the step
-        // (the C passes `void* state` alongside `r`; Rust needs the
-        // aliasing made explicit).
+        // Try until a step was successful.
+        while !reb_integrator_ias15_step_try(r, ias15) {}
+    } else {
+        r.t += r.dt;
+        r.dt_last_done = r.dt;
+    }
+}
+
+/// Step entry point for the dispatcher: takes the state out of the enum
+/// for the duration of the step (the C passes `void* state` alongside
+/// `r`; Rust needs the aliasing made explicit).
+pub fn reb_integrator_ias15_step(r: &mut reb_simulation) {
+    if r.N != 0 {
         let mut ias15 = match std::mem::replace(&mut r.integrator, reb_integrator_state::none) {
             reb_integrator_state::ias15(s) => s,
             other => {
@@ -987,10 +1002,10 @@ pub fn reb_integrator_ias15_step(r: &mut reb_simulation) {
                 return;
             }
         };
-        // Try until a step was successful.
-        while !reb_integrator_ias15_step_try(r, &mut ias15) {}
+        reb_integrator_ias15_step_state(r, &mut ias15);
         r.integrator = reb_integrator_state::ias15(ias15);
     } else {
+        r.gravity_ignore_terms = REB_GRAVITY_IGNORE_TERMS_NONE;
         r.t += r.dt;
         r.dt_last_done = r.dt;
     }
