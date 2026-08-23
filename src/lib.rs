@@ -46,6 +46,7 @@ pub mod integrator_leapfrog;
 pub mod integrator_ias15;
 pub mod integrator_whfast;
 pub mod integrator_saba;
+pub mod integrator_janus;
 
 pub use types::*;
 pub use tools::*;

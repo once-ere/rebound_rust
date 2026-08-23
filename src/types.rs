@@ -215,6 +215,7 @@ pub enum reb_integrator_state {
     ias15(crate::integrator_ias15::reb_integrator_ias15_state),
     whfast(crate::integrator_whfast::reb_integrator_whfast_state),
     saba(crate::integrator_saba::reb_integrator_saba_state),
+    janus(crate::integrator_janus::reb_integrator_janus_state),
 }
 
 impl reb_integrator_state {
@@ -226,6 +227,7 @@ impl reb_integrator_state {
             reb_integrator_state::ias15(_) => "ias15",
             reb_integrator_state::whfast(_) => "whfast",
             reb_integrator_state::saba(_) => "saba",
+            reb_integrator_state::janus(_) => "janus",
         }
     }
 }

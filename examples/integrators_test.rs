@@ -21,6 +21,8 @@ fn main() {
         "whfast"
     } else if integrator.starts_with("saba") {
         "saba"
+    } else if integrator.starts_with("janus") {
+        "janus"
     } else {
         integrator.as_str()
     };
@@ -82,6 +84,17 @@ fn main() {
                 "saba-h864" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_H_8_6_4,
                 "saba-h1064" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_H_10_6_4,
                 "saba-usafe" => sb.safe_mode = 0,
+                _ => {}
+            }
+        }
+    }
+    if integrator.starts_with("janus") {
+        if let reb_integrator_state::janus(ref mut jn) = r.integrator {
+            match integrator.as_str() {
+                "janus-2" => jn.order = 2,
+                "janus-4" => jn.order = 4,
+                "janus-8" => jn.order = 8,
+                "janus-10" => jn.order = 10,
                 _ => {}
             }
         }

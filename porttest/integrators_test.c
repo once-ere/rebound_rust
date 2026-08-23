@@ -8,6 +8,7 @@
 #include "integrator_leapfrog.h"
 #include "integrator_whfast.h"
 #include "integrator_saba.h"
+#include "integrator_janus.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +36,7 @@ int main(int argc, char* argv[]){
     const char* real_integrator = integrator;
     if (strncmp(integrator, "whfast", 6)==0) real_integrator = "whfast";
     if (strncmp(integrator, "saba", 4)==0) real_integrator = "saba";
+    if (strncmp(integrator, "janus", 5)==0) real_integrator = "janus";
     void* state = reb_simulation_set_integrator(r, real_integrator);
     if (strcmp(integrator,"leapfrog")==0){
         struct reb_integrator_leapfrog_state* lf = state;
@@ -66,6 +68,13 @@ int main(int argc, char* argv[]){
         if (strcmp(integrator,"saba-h864")==0)  sb->type = REB_INTEGRATOR_SABA_TYPE_H_8_6_4;
         if (strcmp(integrator,"saba-h1064")==0) sb->type = REB_INTEGRATOR_SABA_TYPE_H_10_6_4;
         if (strcmp(integrator,"saba-usafe")==0) sb->safe_mode = 0;
+    }
+    if (strncmp(integrator, "janus", 5)==0){
+        struct reb_integrator_janus_state* jn = state;
+        if (strcmp(integrator,"janus-2")==0)  jn->order = 2;
+        if (strcmp(integrator,"janus-4")==0)  jn->order = 4;
+        if (strcmp(integrator,"janus-8")==0)  jn->order = 8;
+        if (strcmp(integrator,"janus-10")==0) jn->order = 10;
     }
     r->G = 1.0;
     r->dt = 0.01;

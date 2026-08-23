@@ -142,6 +142,11 @@ pub fn reb_simulation_set_integrator(r: &mut reb_simulation, name: &str) {
                 crate::integrator_saba::reb_integrator_saba_state::default(),
             )
         }
+        "janus" => {
+            r.integrator = reb_integrator_state::janus(
+                crate::integrator_janus::reb_integrator_janus_state::default(),
+            )
+        }
         _ => reb_simulation_error(r, "Integrator not found."),
     }
 }
@@ -284,6 +289,7 @@ pub fn reb_simulation_step(r: &mut reb_simulation) {
         reb_integrator_state::ias15(_) => crate::integrator_ias15::reb_integrator_ias15_step(r),
         reb_integrator_state::whfast(_) => crate::integrator_whfast::reb_integrator_whfast_step(r),
         reb_integrator_state::saba(_) => crate::integrator_saba::reb_integrator_saba_step(r),
+        reb_integrator_state::janus(_) => crate::integrator_janus::reb_integrator_janus_step(r),
     }
 
     if r.post_timestep_modifications.is_some() {
@@ -380,6 +386,9 @@ pub fn reb_simulation_synchronize(r: &mut reb_simulation) {
         }
         reb_integrator_state::saba(_) => {
             crate::integrator_saba::reb_integrator_saba_synchronize(r)
+        }
+        reb_integrator_state::janus(_) => {
+            crate::integrator_janus::reb_integrator_janus_synchronize(r)
         }
         _ => {}
     }
