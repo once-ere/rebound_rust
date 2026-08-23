@@ -25,6 +25,13 @@ the open-source multi-purpose N-body code for collisional dynamics by
 - Every example in [`examples/`](examples/) has a companion Jupyter notebook
   in [`notebooks/`](notebooks/).
 
+This port was produced as the physics acceptance test of its sibling project
+[`once-ere/rustSolveIt_Win11_SUNDIALS_7_8_0`](https://github.com/once-ere/rustSolveIt_Win11_SUNDIALS_7_8_0)
+— a pure-Rust physics simulator on a pure-Rust translation of SUNDIALS 7.8.0
+for Windows 11 — and follows the same porting discipline established there:
+zero `unsafe`, zero dependencies, zero warnings, C names preserved, and
+bit-for-bit verification against the platform's C reference build.
+
 ## Quick start
 
 ```toml
