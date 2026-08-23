@@ -23,6 +23,8 @@ fn main() {
         "saba"
     } else if integrator.starts_with("janus") {
         "janus"
+    } else if integrator.starts_with("eos") {
+        "eos"
     } else {
         integrator.as_str()
     };
@@ -96,6 +98,20 @@ fn main() {
                 "janus-8" => jn.order = 8,
                 "janus-10" => jn.order = 10,
                 _ => {}
+            }
+        }
+    }
+    if integrator.starts_with("eos") {
+        if let reb_integrator_state::eos(ref mut es) = r.integrator {
+            // eos-<phi0>-<phi1> with numeric type ids 0-8, and eos-usafe
+            if integrator == "eos-usafe" {
+                es.safe_mode = 0;
+            } else if integrator.len() == 7 {
+                let b = integrator.as_bytes();
+                if b[3] == b'-' && b[5] == b'-' {
+                    es.phi0 = (b[4] - b'0') as i32;
+                    es.phi1 = (b[6] - b'0') as i32;
+                }
             }
         }
     }
