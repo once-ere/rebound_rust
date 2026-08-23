@@ -61,6 +61,18 @@ int main(int argc, char* argv[]){
 
     char fname[256];
 
+    if (strcmp(mode,"load")==0){
+        /* Load snapshot 0 from the file given in argv[3], dump state. */
+        const char* lfname = argc>3 ? argv[3] : "served.bin";
+        struct reb_simulation* r = reb_simulation_create_from_file((char*)lfname, 0);
+        if (!r){
+            printf("Failed to load %s\n", lfname);
+            return 1;
+        }
+        dump_state(r, integrator);
+        printf("load done: t=%e\n", r->t);
+        return 0;
+    }
     if (strcmp(mode,"write")==0){
         struct reb_simulation* r = reb_simulation_create();
         void* state = reb_simulation_set_integrator(r, real_integrator);

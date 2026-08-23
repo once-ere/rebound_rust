@@ -109,6 +109,7 @@ pub fn reb_simulation_create() -> reb_simulation {
         heartbeat: None,
         coefficient_of_restitution: None,
         collision_resolve: None,
+        server_data: None,
     };
     reb_simulation_set_integrator(&mut r, "ias15");
     r
@@ -267,7 +268,10 @@ fn reb_check_exit(r: &mut reb_simulation, tmax: f64, last_full_dt: &mut f64) -> 
         }
     }
     while r.status == REB_STATUS_PAUSED || r.status == REB_STATUS_SCREENSHOT {
-        // Wait for user to disable paused simulation
+        // Wait for user to disable paused simulation (the C server
+        // thread flips the status directly; here the queued keyboard
+        // commands are applied while waiting).
+        crate::server::reb_server_update(r);
         std::thread::sleep(std::time::Duration::from_millis(1));
     }
     let dtsign = 1.0_f64.copysign(r.dt); // Used to determine integration direction
@@ -431,6 +435,11 @@ pub fn reb_simulation_integrate(r: &mut reb_simulation, tmax: f64) -> REB_STATUS
     }
     run_heartbeat(r);
     while reb_check_exit(r, tmax, &mut last_full_dt) < 0 {
+        if r.server_data.is_some() {
+            // C: the integrate loop holds the server mutex around the
+            // step; here the snapshot/key handshake runs between steps.
+            crate::server::reb_server_update(r);
+        }
         if r.simulationarchive_filename.is_some() {
             crate::simulationarchive::reb_simulationarchive_heartbeat(r);
         }

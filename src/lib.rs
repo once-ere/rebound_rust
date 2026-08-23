@@ -56,6 +56,7 @@ pub mod derivatives;
 pub mod frequency_analysis;
 pub mod binarydata;
 pub mod simulationarchive;
+pub mod server;
 
 pub use types::*;
 pub use tools::*;
@@ -71,6 +72,7 @@ pub use derivatives::*;
 pub use frequency_analysis::*;
 pub use binarydata::*;
 pub use simulationarchive::*;
+pub use server::*;
 
 /// Version of the C release this crate translates (rebound.c `reb_version_str`).
 pub const reb_version_str: &str = "5.1.1";

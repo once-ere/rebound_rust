@@ -387,4 +387,8 @@ pub struct reb_simulation {
     pub coefficient_of_restitution: Option<fn(&reb_simulation, f64) -> f64>,
     pub collision_resolve:
         Option<fn(&mut reb_simulation, reb_collision) -> REB_COLLISION_RESOLVE_OUTCOME>,
+
+    /// Web server state (server.c; None unless
+    /// `reb_simulation_start_server` was called).
+    pub server_data: Option<crate::server::reb_server_data>,
 }
