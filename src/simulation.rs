@@ -169,6 +169,11 @@ pub fn reb_simulation_set_integrator(r: &mut reb_simulation, name: &str) {
                 crate::integrator_trace::reb_integrator_trace_state::default(),
             )
         }
+        "whfast512" => {
+            r.integrator = reb_integrator_state::whfast512(
+                crate::integrator_whfast512::reb_integrator_whfast512_state::default(),
+            )
+        }
         _ => reb_simulation_error(r, "Integrator not found."),
     }
 }
@@ -332,6 +337,9 @@ pub fn reb_simulation_step(r: &mut reb_simulation) {
         }
         reb_integrator_state::bs(_) => crate::integrator_bs::reb_integrator_bs_step(r),
         reb_integrator_state::trace(_) => crate::integrator_trace::reb_integrator_trace_step(r),
+        reb_integrator_state::whfast512(_) => {
+            crate::integrator_whfast512::reb_integrator_whfast512_step(r)
+        }
     }
 
     // Integrate other ODEs (simulation.c: user ODEs are advanced with a
@@ -462,6 +470,9 @@ pub fn reb_simulation_synchronize(r: &mut reb_simulation) {
         }
         reb_integrator_state::mercurius(_) => {
             crate::integrator_mercurius::reb_integrator_mercurius_synchronize(r)
+        }
+        reb_integrator_state::whfast512(_) => {
+            crate::integrator_whfast512::reb_integrator_whfast512_synchronize(r)
         }
         _ => {}
     }
