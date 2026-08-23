@@ -365,10 +365,13 @@ pub fn reb_simulation_steps(r: &mut reb_simulation, N_steps: usize) -> REB_STATU
     r.status
 }
 
-/// simulation.c `reb_simulation_synchronize`. Of the integrators ported
-/// in this phase only WHFast defines a synchronize callback in C; its
-/// Phase-B port will hook in here.
-pub fn reb_simulation_synchronize(_r: &mut reb_simulation) {}
+/// simulation.c `reb_simulation_synchronize`. Of the built-in
+/// integrators only WHFast defines a synchronize callback in C.
+pub fn reb_simulation_synchronize(r: &mut reb_simulation) {
+    if let reb_integrator_state::whfast(_) = r.integrator {
+        crate::integrator_whfast::reb_integrator_whfast_synchronize(r);
+    }
+}
 
 /// simulation.c `reb_simulation_update_acceleration`.
 pub fn reb_simulation_update_acceleration(r: &mut reb_simulation) {

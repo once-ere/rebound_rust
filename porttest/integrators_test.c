@@ -6,6 +6,7 @@
  * Part of the rebound_rs port verification. GPL-3.0-or-later. */
 #include "rebound.h"
 #include "integrator_leapfrog.h"
+#include "integrator_whfast.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,10 +21,34 @@ int main(int argc, char* argv[]){
     unsigned long long nsteps = argc>3 ? strtoull(argv[3],NULL,10) : 1000;
 
     struct reb_simulation* r = reb_simulation_create();
-    void* state = reb_simulation_set_integrator(r, integrator);
+    /* whfast configurations are encoded as pseudo names:
+     *   whfast        default (jacobi, safe_mode)
+     *   whfast-c11    corrector 11        whfast-c17    corrector 17
+     *   whfast-dh     democratic heliocentric
+     *   whfast-whds   WHDS coordinates
+     *   whfast-bary   barycentric coordinates
+     *   whfast-mk     modified kick kernel
+     *   whfast-comp   composition kernel
+     *   whfast-lazy   lazy implementer's kernel
+     *   whfast-usafe  safe_mode = 0 */
+    const char* real_integrator = integrator;
+    if (strncmp(integrator, "whfast", 6)==0) real_integrator = "whfast";
+    void* state = reb_simulation_set_integrator(r, real_integrator);
     if (strcmp(integrator,"leapfrog")==0){
         struct reb_integrator_leapfrog_state* lf = state;
         lf->order = order;
+    }
+    if (strncmp(integrator, "whfast", 6)==0){
+        struct reb_integrator_whfast_state* wh = state;
+        if (strcmp(integrator,"whfast-c11")==0)  wh->corrector = 11;
+        if (strcmp(integrator,"whfast-c17")==0){ wh->corrector = 17; wh->corrector2 = 1; }
+        if (strcmp(integrator,"whfast-dh")==0)   wh->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC;
+        if (strcmp(integrator,"whfast-whds")==0) wh->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_WHDS;
+        if (strcmp(integrator,"whfast-bary")==0) wh->coordinates = REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC;
+        if (strcmp(integrator,"whfast-mk")==0)   wh->kernel = REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK;
+        if (strcmp(integrator,"whfast-comp")==0) wh->kernel = REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION;
+        if (strcmp(integrator,"whfast-lazy")==0) wh->kernel = REB_INTEGRATOR_WHFAST_KERNEL_LAZY;
+        if (strcmp(integrator,"whfast-usafe")==0) wh->safe_mode = 0;
     }
     r->G = 1.0;
     r->dt = 0.01;

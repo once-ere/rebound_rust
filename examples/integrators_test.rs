@@ -16,10 +16,48 @@ fn main() {
 
     let mut sim = reb_simulation_create();
     let r = &mut sim;
-    reb_simulation_set_integrator(r, &integrator);
+    // whfast configurations are encoded as pseudo names; see the C twin.
+    let real_integrator = if integrator.starts_with("whfast") { "whfast" } else { integrator.as_str() };
+    reb_simulation_set_integrator(r, real_integrator);
     if integrator == "leapfrog" {
         if let reb_integrator_state::leapfrog(ref mut lf) = r.integrator {
             lf.order = order;
+        }
+    }
+    if integrator.starts_with("whfast") {
+        if let reb_integrator_state::whfast(ref mut wh) = r.integrator {
+            match integrator.as_str() {
+                "whfast-c11" => wh.corrector = 11,
+                "whfast-c17" => {
+                    wh.corrector = 17;
+                    wh.corrector2 = 1;
+                }
+                "whfast-dh" => {
+                    wh.coordinates =
+                        rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC
+                }
+                "whfast-whds" => {
+                    wh.coordinates =
+                        rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_COORDINATES_WHDS
+                }
+                "whfast-bary" => {
+                    wh.coordinates =
+                        rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC
+                }
+                "whfast-mk" => {
+                    wh.kernel =
+                        rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK
+                }
+                "whfast-comp" => {
+                    wh.kernel =
+                        rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION
+                }
+                "whfast-lazy" => {
+                    wh.kernel = rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_KERNEL_LAZY
+                }
+                "whfast-usafe" => wh.safe_mode = 0,
+                _ => {}
+            }
         }
     }
     r.G = 1.0;
