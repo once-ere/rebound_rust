@@ -248,12 +248,13 @@ fn effective_N_active(r: &reb_simulation) -> usize {
 /// warnings are emitted through `r` (the C casts away const for this).
 pub fn reb_integrator_whfast_kepler_solver(
     r: &mut reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &mut [reb_particle],
+    p_jh_var: &mut [reb_particle],
     pindex: usize,
     mu: f64,
     dt: f64,
 ) {
-    let p1 = whfast.p_jh[pindex]; // Copy of particle
+    let p1 = p_jh[pindex]; // Copy of particle
 
     let r0 = (p1.x * p1.x + p1.y * p1.y + p1.z * p1.z).sqrt();
     let r0i = 1. / r0;
@@ -401,7 +402,7 @@ pub fn reb_integrator_whfast_kepler_solver(
     let gd = -mu * Gs[2] * ri;
 
     {
-        let p = &mut whfast.p_jh[pindex];
+        let p = &mut p_jh[pindex];
         p.x += f * p1.x + g * p1.vx;
         p.y += f * p1.y + g * p1.vy;
         p.z += f * p1.z + g * p1.vz;
@@ -414,7 +415,7 @@ pub fn reb_integrator_whfast_kepler_solver(
     // Variations
     for v in 0..r.var_config.len() {
         let vc = r.var_config[v];
-        let dp1 = whfast.p_jh_var[pindex + vc.index];
+        let dp1 = p_jh_var[pindex + vc.index];
         stiefel_Gs(&mut Gs, beta, X); // Recalculate (to get Gs[4] and Gs[5])
         let dr0 = (dp1.x * p1.x + dp1.y * p1.y + dp1.z * p1.z) * r0i;
         let dbeta = -2. * mu * dr0 * r0i * r0i
@@ -436,7 +437,7 @@ pub fn reb_integrator_whfast_kepler_solver(
         let dfd = -mu * dG1 * r0i * ri + mu * Gs[1] * (dr0 * r0i + dr * ri) * r0i * ri;
         let dgd = -mu * dG2 * ri + mu * Gs[2] * dr * ri * ri;
 
-        let dp1p = &mut whfast.p_jh_var[pindex + vc.index];
+        let dp1p = &mut p_jh_var[pindex + vc.index];
         dp1p.x += f * dp1.x + g * dp1.vx + df * p1.x + dg * p1.vx;
         dp1p.y += f * dp1.y + g * dp1.vy + df * p1.y + dg * p1.vy;
         dp1p.z += f * dp1.z + g * dp1.vz + df * p1.z + dg * p1.vz;
@@ -450,37 +451,39 @@ pub fn reb_integrator_whfast_kepler_solver(
 /// integrator_whfast.c `reb_integrator_whfast_interaction_step`.
 pub fn reb_integrator_whfast_interaction_step(
     r: &mut reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &mut [reb_particle],
+    p_jh_var: &mut [reb_particle],
+    coordinates: u32,
     _dt: f64,
 ) {
     let N = r.N;
     let N_active = effective_N_active(r);
     let G = r.G;
     let m0 = r.particles[0].m;
-    match whfast.coordinates {
+    match coordinates {
         REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI => {
             reb_transformations_inertial_to_jacobi_acc(
                 &r.particles,
-                &mut whfast.p_jh,
+                p_jh,
                 &r.particles,
                 N,
                 N_active,
             );
             for v in 0..r.var_config.len() {
                 let vc = r.var_config[v];
-                let (pv, jv) = (&r.particles_var[vc.index..], &mut whfast.p_jh_var[vc.index..]);
+                let (pv, jv) = (&r.particles_var[vc.index..], &mut p_jh_var[vc.index..]);
                 reb_transformations_inertial_to_jacobi_acc(pv, jv, &r.particles, N, N_active);
             }
             let mut eta = m0;
             for i in 1..N {
                 // Eq 132
-                let pji = whfast.p_jh[i];
+                let pji = p_jh[i];
                 if i < N_active {
                     eta += pji.m;
                 }
-                whfast.p_jh[i].vx += _dt * pji.ax;
-                whfast.p_jh[i].vy += _dt * pji.ay;
-                whfast.p_jh[i].vz += _dt * pji.az;
+                p_jh[i].vx += _dt * pji.ax;
+                p_jh[i].vy += _dt * pji.ay;
+                p_jh[i].vz += _dt * pji.az;
                 if r.gravity != REB_GRAVITY::JACOBI {
                     // Jacobi terms not added in update_acceleration: add here
                     if i > 1 {
@@ -488,60 +491,60 @@ pub fn reb_integrator_whfast_interaction_step(
                         let rji = rj2i.sqrt();
                         let rj3iM = rji * rj2i * G * eta;
                         let prefac1 = _dt * rj3iM;
-                        whfast.p_jh[i].vx += prefac1 * pji.x;
-                        whfast.p_jh[i].vy += prefac1 * pji.y;
-                        whfast.p_jh[i].vz += prefac1 * pji.z;
+                        p_jh[i].vx += prefac1 * pji.x;
+                        p_jh[i].vy += prefac1 * pji.y;
+                        p_jh[i].vz += prefac1 * pji.z;
                         for v in 0..r.var_config.len() {
                             let vc = r.var_config[v];
                             let index = vc.index;
                             let rj5M = rj3iM * rj2i;
-                            let pv = whfast.p_jh_var[i + index];
+                            let pv = p_jh_var[i + index];
                             let rdr = pv.x * pji.x + pv.y * pji.y + pv.z * pji.z;
                             let prefac2 = -_dt * 3. * rdr * rj5M;
-                            whfast.p_jh_var[i + index].vx += prefac1 * pv.x + prefac2 * pji.x;
-                            whfast.p_jh_var[i + index].vy += prefac1 * pv.y + prefac2 * pji.y;
-                            whfast.p_jh_var[i + index].vz += prefac1 * pv.z + prefac2 * pji.z;
+                            p_jh_var[i + index].vx += prefac1 * pv.x + prefac2 * pji.x;
+                            p_jh_var[i + index].vy += prefac1 * pv.y + prefac2 * pji.y;
+                            p_jh_var[i + index].vz += prefac1 * pv.z + prefac2 * pji.z;
                         }
                     }
                     for v in 0..r.var_config.len() {
                         let vc = r.var_config[v];
                         let index = vc.index;
-                        let pv = whfast.p_jh_var[i + index];
-                        whfast.p_jh_var[i + index].vx += _dt * pv.ax;
-                        whfast.p_jh_var[i + index].vy += _dt * pv.ay;
-                        whfast.p_jh_var[i + index].vz += _dt * pv.az;
+                        let pv = p_jh_var[i + index];
+                        p_jh_var[i + index].vx += _dt * pv.ax;
+                        p_jh_var[i + index].vy += _dt * pv.ay;
+                        p_jh_var[i + index].vz += _dt * pv.az;
                     }
                 }
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC => {
             for i in 1..N {
-                whfast.p_jh[i].vx += _dt * r.particles[i].ax;
-                whfast.p_jh[i].vy += _dt * r.particles[i].ay;
-                whfast.p_jh[i].vz += _dt * r.particles[i].az;
+                p_jh[i].vx += _dt * r.particles[i].ax;
+                p_jh[i].vy += _dt * r.particles[i].ay;
+                p_jh[i].vz += _dt * r.particles[i].az;
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_WHDS => {
             for i in 1..N_active {
                 let mi = r.particles[i].m;
-                whfast.p_jh[i].vx += _dt * (m0 + mi) * r.particles[i].ax / m0;
-                whfast.p_jh[i].vy += _dt * (m0 + mi) * r.particles[i].ay / m0;
-                whfast.p_jh[i].vz += _dt * (m0 + mi) * r.particles[i].az / m0;
+                p_jh[i].vx += _dt * (m0 + mi) * r.particles[i].ax / m0;
+                p_jh[i].vy += _dt * (m0 + mi) * r.particles[i].ay / m0;
+                p_jh[i].vz += _dt * (m0 + mi) * r.particles[i].az / m0;
             }
             for i in N_active..N {
-                whfast.p_jh[i].vx += _dt * r.particles[i].ax;
-                whfast.p_jh[i].vy += _dt * r.particles[i].ay;
-                whfast.p_jh[i].vz += _dt * r.particles[i].az;
+                p_jh[i].vx += _dt * r.particles[i].ax;
+                p_jh[i].vy += _dt * r.particles[i].ay;
+                p_jh[i].vz += _dt * r.particles[i].az;
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
             for i in 1..N {
-                let pji = whfast.p_jh[i];
+                let pji = p_jh[i];
                 let dr = (pji.x * pji.x + pji.y * pji.y + pji.z * pji.z).sqrt();
-                let prefac = G * whfast.p_jh[0].m / (dr * dr * dr);
-                whfast.p_jh[i].vx += _dt * (prefac * pji.x + r.particles[i].ax);
-                whfast.p_jh[i].vy += _dt * (prefac * pji.y + r.particles[i].ay);
-                whfast.p_jh[i].vz += _dt * (prefac * pji.z + r.particles[i].az);
+                let prefac = G * p_jh[0].m / (dr * dr * dr);
+                p_jh[i].vx += _dt * (prefac * pji.x + r.particles[i].ax);
+                p_jh[i].vy += _dt * (prefac * pji.y + r.particles[i].ay);
+                p_jh[i].vz += _dt * (prefac * pji.z + r.particles[i].az);
             }
         }
         _ => {}
@@ -551,13 +554,14 @@ pub fn reb_integrator_whfast_interaction_step(
 /// integrator_whfast.c `reb_integrator_whfast_jump_step`.
 pub fn reb_integrator_whfast_jump_step(
     r: &reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &mut [reb_particle],
+    coordinates: u32,
     _dt: f64,
 ) {
     let N = r.N;
     let N_active = effective_N_active(r);
     let m0 = r.particles[0].m;
-    match whfast.coordinates {
+    match coordinates {
         REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI => {
             // Nothing to be done.
         }
@@ -567,14 +571,14 @@ pub fn reb_integrator_whfast_jump_step(
             let mut pz = 0.;
             for i in 1..N_active {
                 let m = r.particles[i].m;
-                px += m * whfast.p_jh[i].vx;
-                py += m * whfast.p_jh[i].vy;
-                pz += m * whfast.p_jh[i].vz;
+                px += m * p_jh[i].vx;
+                py += m * p_jh[i].vy;
+                pz += m * p_jh[i].vz;
             }
             for i in 1..N {
-                whfast.p_jh[i].x += _dt * (px / m0);
-                whfast.p_jh[i].y += _dt * (py / m0);
-                whfast.p_jh[i].z += _dt * (pz / m0);
+                p_jh[i].x += _dt * (px / m0);
+                p_jh[i].y += _dt * (py / m0);
+                p_jh[i].z += _dt * (pz / m0);
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_WHDS => {
@@ -583,21 +587,21 @@ pub fn reb_integrator_whfast_jump_step(
             let mut pz = 0.;
             for i in 1..N_active {
                 let m = r.particles[i].m;
-                px += m * whfast.p_jh[i].vx / (m0 + m);
-                py += m * whfast.p_jh[i].vy / (m0 + m);
-                pz += m * whfast.p_jh[i].vz / (m0 + m);
+                px += m * p_jh[i].vx / (m0 + m);
+                py += m * p_jh[i].vy / (m0 + m);
+                pz += m * p_jh[i].vz / (m0 + m);
             }
             for i in 1..N_active {
                 let m = r.particles[i].m;
-                let pv = whfast.p_jh[i];
-                whfast.p_jh[i].x += _dt * (px - (m * pv.vx / (m0 + m)));
-                whfast.p_jh[i].y += _dt * (py - (m * pv.vy / (m0 + m)));
-                whfast.p_jh[i].z += _dt * (pz - (m * pv.vz / (m0 + m)));
+                let pv = p_jh[i];
+                p_jh[i].x += _dt * (px - (m * pv.vx / (m0 + m)));
+                p_jh[i].y += _dt * (py - (m * pv.vy / (m0 + m)));
+                p_jh[i].z += _dt * (pz - (m * pv.vz / (m0 + m)));
             }
             for i in N_active..N {
-                whfast.p_jh[i].x += _dt * px;
-                whfast.p_jh[i].y += _dt * py;
-                whfast.p_jh[i].z += _dt * pz;
+                p_jh[i].x += _dt * px;
+                p_jh[i].y += _dt * py;
+                p_jh[i].z += _dt * pz;
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
@@ -610,7 +614,9 @@ pub fn reb_integrator_whfast_jump_step(
 /// integrator_whfast.c `reb_integrator_whfast_kepler_step` (serial).
 pub fn reb_integrator_whfast_kepler_step(
     r: &mut reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &mut [reb_particle],
+    p_jh_var: &mut [reb_particle],
+    coordinates: u32,
     _dt: f64,
 ) {
     let m0 = r.particles[0].m;
@@ -618,34 +624,34 @@ pub fn reb_integrator_whfast_kepler_step(
     let N = r.N;
     let N_active = effective_N_active(r);
     let mut eta = m0;
-    match whfast.coordinates {
+    match coordinates {
         REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI => {
             for i in 1..N {
                 if i < N_active {
-                    eta += whfast.p_jh[i].m;
+                    eta += p_jh[i].m;
                 }
-                reb_integrator_whfast_kepler_solver(r, whfast, i, eta * G, _dt);
+                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt);
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC => {
             for i in 1..N {
-                reb_integrator_whfast_kepler_solver(r, whfast, i, eta * G, _dt); // eta = m0
+                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt); // eta = m0
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_WHDS => {
             for i in 1..N {
                 if i < N_active {
-                    eta = m0 + whfast.p_jh[i].m;
+                    eta = m0 + p_jh[i].m;
                 } else {
                     eta = m0;
                 }
-                reb_integrator_whfast_kepler_solver(r, whfast, i, eta * G, _dt);
+                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt);
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
-            eta = whfast.p_jh[0].m;
+            eta = p_jh[0].m;
             for i in 1..N {
-                reb_integrator_whfast_kepler_solver(r, whfast, i, eta * G, _dt);
+                reb_integrator_whfast_kepler_solver(r, p_jh, p_jh_var, i, eta * G, _dt);
             }
         }
         _ => {}
@@ -655,19 +661,20 @@ pub fn reb_integrator_whfast_kepler_step(
 /// integrator_whfast.c `reb_integrator_whfast_com_step`.
 pub fn reb_integrator_whfast_com_step(
     r: &reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &mut [reb_particle],
+    p_jh_var: &mut [reb_particle],
     _dt: f64,
 ) {
-    whfast.p_jh[0].x += _dt * whfast.p_jh[0].vx;
-    whfast.p_jh[0].y += _dt * whfast.p_jh[0].vy;
-    whfast.p_jh[0].z += _dt * whfast.p_jh[0].vz;
+    p_jh[0].x += _dt * p_jh[0].vx;
+    p_jh[0].y += _dt * p_jh[0].vy;
+    p_jh[0].z += _dt * p_jh[0].vz;
     // Only WHFast supports variational equations
     for v in 0..r.var_config.len() {
         let vc = r.var_config[v];
-        let pv = whfast.p_jh_var[vc.index];
-        whfast.p_jh_var[vc.index].x += _dt * pv.vx;
-        whfast.p_jh_var[vc.index].y += _dt * pv.vy;
-        whfast.p_jh_var[vc.index].z += _dt * pv.vz;
+        let pv = p_jh_var[vc.index];
+        p_jh_var[vc.index].x += _dt * pv.vx;
+        p_jh_var[vc.index].y += _dt * pv.vy;
+        p_jh_var[vc.index].z += _dt * pv.vz;
     }
 }
 
@@ -682,26 +689,26 @@ fn reb_whfast_corrector_Z(
     let N_active = effective_N_active(r);
     match whfast.coordinates {
         REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI => {
-            reb_integrator_whfast_kepler_step(r, whfast, a);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, a);
             reb_transformations_jacobi_to_inertial_pos_sim(r, whfast, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, whfast, -b);
-            reb_integrator_whfast_kepler_step(r, whfast, -2. * a);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -b);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -2. * a);
             reb_transformations_jacobi_to_inertial_pos_sim(r, whfast, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, whfast, b);
-            reb_integrator_whfast_kepler_step(r, whfast, a);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, b);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, a);
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
-            reb_integrator_whfast_kepler_step(r, whfast, a);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, a);
             reb_transformations_barycentric_to_inertial_pos(&mut r.particles, &whfast.p_jh, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, whfast, -b);
-            reb_integrator_whfast_kepler_step(r, whfast, -2. * a);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -b);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -2. * a);
             reb_transformations_barycentric_to_inertial_pos(&mut r.particles, &whfast.p_jh, N, N_active);
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, whfast, b);
-            reb_integrator_whfast_kepler_step(r, whfast, a);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, b);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, a);
         }
         _ => {
             reb_simulation_error(r, "Coordinate system not supported.");
@@ -797,7 +804,7 @@ fn reb_whfast_operator_C(
     a: f64,
     b: f64,
 ) {
-    reb_integrator_whfast_kepler_step(r, whfast, a);
+    reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, a);
     let N = r.N;
     let N_active = effective_N_active(r);
     {
@@ -806,8 +813,8 @@ fn reb_whfast_operator_C(
     }
     // Note: variational particles not implemented (as in C).
     reb_simulation_update_acceleration(r);
-    reb_integrator_whfast_interaction_step(r, whfast, b);
-    reb_integrator_whfast_kepler_step(r, whfast, -a);
+    reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, b);
+    reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -a);
 }
 
 /// integrator_whfast.c `reb_whfast_operator_Y`.
@@ -828,10 +835,10 @@ fn reb_whfast_operator_U(
     a: f64,
     b: f64,
 ) {
-    reb_integrator_whfast_kepler_step(r, whfast, a);
+    reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, a);
     reb_whfast_operator_Y(r, whfast, a, b);
     reb_whfast_operator_Y(r, whfast, a, -b);
-    reb_integrator_whfast_kepler_step(r, whfast, -a);
+    reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -a);
 }
 
 /// integrator_whfast.c `reb_whfast_apply_corrector2`.
@@ -1022,28 +1029,30 @@ pub fn reb_integrator_whfast_init(
 /// integrator_whfast.c `reb_integrator_whfast_from_inertial`.
 pub fn reb_integrator_whfast_from_inertial(
     r: &mut reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &mut [reb_particle],
+    p_jh_var: &mut [reb_particle],
+    coordinates: u32,
 ) {
     let N = r.N;
     let N_active = effective_N_active(r);
-    match whfast.coordinates {
+    match coordinates {
         REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI => {
             let masses = r.particles.clone();
-            reb_transformations_inertial_to_jacobi_posvel(&r.particles.clone(), &mut whfast.p_jh, &masses, N, N_active);
+            reb_transformations_inertial_to_jacobi_posvel(&r.particles.clone(), p_jh, &masses, N, N_active);
             for v in 0..r.var_config.len() {
                 let vc = r.var_config[v];
                 let pv = r.particles_var[vc.index..].to_vec();
-                reb_transformations_inertial_to_jacobi_posvel(&pv, &mut whfast.p_jh_var[vc.index..], &masses, N, N_active);
+                reb_transformations_inertial_to_jacobi_posvel(&pv, &mut p_jh_var[vc.index..], &masses, N, N_active);
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC => {
-            reb_transformations_inertial_to_democraticheliocentric_posvel(&r.particles, &mut whfast.p_jh, N, N_active);
+            reb_transformations_inertial_to_democraticheliocentric_posvel(&r.particles, p_jh, N, N_active);
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_WHDS => {
-            reb_transformations_inertial_to_whds_posvel(&r.particles, &mut whfast.p_jh, N, N_active);
+            reb_transformations_inertial_to_whds_posvel(&r.particles, p_jh, N, N_active);
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
-            reb_transformations_inertial_to_barycentric_posvel(&r.particles, &mut whfast.p_jh, N, N_active);
+            reb_transformations_inertial_to_barycentric_posvel(&r.particles, p_jh, N, N_active);
         }
         _ => {}
     }
@@ -1054,18 +1063,20 @@ pub fn reb_integrator_whfast_from_inertial(
 /// variational Jacobi transform (posvel vs pos) — carried exactly.
 pub fn reb_integrator_whfast_to_inertial(
     r: &mut reb_simulation,
-    whfast: &mut reb_integrator_whfast_state,
+    p_jh: &[reb_particle],
+    p_jh_var: &[reb_particle],
+    coordinates: u32,
 ) {
     let N = r.N;
     let N_active = effective_N_active(r);
     let velocity_dependent = r.force_is_velocity_dependent != 0;
-    match whfast.coordinates {
+    match coordinates {
         REB_INTEGRATOR_WHFAST_COORDINATES_JACOBI => {
             let masses = r.particles.clone();
-            reb_transformations_jacobi_to_inertial_posvel(&mut r.particles, &whfast.p_jh, &masses, N, N_active);
+            reb_transformations_jacobi_to_inertial_posvel(&mut r.particles, p_jh, &masses, N, N_active);
             for v in 0..r.var_config.len() {
                 let vc = r.var_config[v];
-                let (pv, jv) = (&mut r.particles_var[vc.index..], &whfast.p_jh_var[vc.index..]);
+                let (pv, jv) = (&mut r.particles_var[vc.index..], &p_jh_var[vc.index..]);
                 if velocity_dependent {
                     reb_transformations_jacobi_to_inertial_posvel(pv, jv, &masses, N, N_active);
                 } else {
@@ -1074,13 +1085,13 @@ pub fn reb_integrator_whfast_to_inertial(
             }
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_DEMOCRATICHELIOCENTRIC => {
-            reb_transformations_democraticheliocentric_to_inertial_posvel(&mut r.particles, &whfast.p_jh, N, N_active);
+            reb_transformations_democraticheliocentric_to_inertial_posvel(&mut r.particles, p_jh, N, N_active);
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_WHDS => {
-            reb_transformations_whds_to_inertial_posvel(&mut r.particles, &whfast.p_jh, N, N_active);
+            reb_transformations_whds_to_inertial_posvel(&mut r.particles, p_jh, N, N_active);
         }
         REB_INTEGRATOR_WHFAST_COORDINATES_BARYCENTRIC => {
-            reb_transformations_barycentric_to_inertial_posvel(&mut r.particles, &whfast.p_jh, N, N_active);
+            reb_transformations_barycentric_to_inertial_posvel(&mut r.particles, p_jh, N, N_active);
         }
         _ => {}
     }
@@ -1107,13 +1118,13 @@ pub fn reb_integrator_whfast_synchronize_state(
             | REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK
             | REB_INTEGRATOR_WHFAST_KERNEL_LAZY => {
                 let half = r.dt / 2.;
-                reb_integrator_whfast_kepler_step(r, whfast, half);
-                reb_integrator_whfast_com_step(r, whfast, half);
+                reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, half);
+                reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, half);
             }
             REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION => {
                 let dt38 = 3. * r.dt / 8.;
-                reb_integrator_whfast_kepler_step(r, whfast, dt38);
-                reb_integrator_whfast_com_step(r, whfast, dt38);
+                reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt38);
+                reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, dt38);
             }
             _ => {
                 reb_simulation_error(r, "WHFast kernel not implemented.");
@@ -1176,7 +1187,7 @@ pub fn reb_integrator_whfast_step_state(
                 whfast.recalculate_coordinates_but_not_synchronized_warning += 1;
             }
         }
-        reb_integrator_whfast_from_inertial(r, whfast);
+        reb_integrator_whfast_from_inertial(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates);
     }
     if r.is_synchronized != 0 {
         // First half DRIFT step
@@ -1191,13 +1202,13 @@ pub fn reb_integrator_whfast_step_state(
             | REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK
             | REB_INTEGRATOR_WHFAST_KERNEL_LAZY => {
                 let half = r.dt / 2.;
-                reb_integrator_whfast_kepler_step(r, whfast, half);
-                reb_integrator_whfast_com_step(r, whfast, half);
+                reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, half);
+                reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, half);
             }
             REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION => {
                 let dt58 = 5. * r.dt / 8.;
-                reb_integrator_whfast_kepler_step(r, whfast, dt58);
-                reb_integrator_whfast_com_step(r, whfast, dt58);
+                reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt58);
+                reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, dt58);
             }
             _ => {
                 reb_simulation_error(r, "WHFast kernel not implemented.");
@@ -1206,12 +1217,14 @@ pub fn reb_integrator_whfast_step_state(
         }
     } else {
         // Combined DRIFT step
-        reb_integrator_whfast_kepler_step(r, whfast, r.dt); // full timestep
-        reb_integrator_whfast_com_step(r, whfast, r.dt);
+        let fulldt = r.dt;
+        reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, fulldt); // full timestep
+        reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, fulldt);
     }
-    reb_integrator_whfast_jump_step(r, whfast, r.dt / 2.);
+    let halfdt = r.dt / 2.;
+    reb_integrator_whfast_jump_step(r, &mut whfast.p_jh, whfast.coordinates, halfdt);
 
-    reb_integrator_whfast_to_inertial(r, whfast);
+    reb_integrator_whfast_to_inertial(r, &whfast.p_jh, &whfast.p_jh_var, whfast.coordinates);
 
     r.t += dt / 2.;
 
@@ -1219,8 +1232,8 @@ pub fn reb_integrator_whfast_step_state(
 
     match whfast.kernel {
         REB_INTEGRATOR_WHFAST_KERNEL_DEFAULT => {
-            reb_integrator_whfast_interaction_step(r, whfast, dt);
-            reb_integrator_whfast_jump_step(r, whfast, dt / 2.);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt);
+            reb_integrator_whfast_jump_step(r, &mut whfast.p_jh, whfast.coordinates, dt / 2.);
         }
         REB_INTEGRATOR_WHFAST_KERNEL_MODIFIEDKICK => {
             // p_jh used as a temporary buffer for "jerk"
@@ -1235,34 +1248,34 @@ pub fn reb_integrator_whfast_step_state(
                 r.particles[i].ay += prefact * whfast.p_jh[i].ay;
                 r.particles[i].az += prefact * whfast.p_jh[i].az;
             }
-            reb_integrator_whfast_interaction_step(r, whfast, dt);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt);
         }
         REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION => {
-            reb_integrator_whfast_interaction_step(r, whfast, -dt / 6.);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -dt / 6.);
 
-            reb_integrator_whfast_kepler_step(r, whfast, -dt / 4.);
-            reb_integrator_whfast_com_step(r, whfast, -dt / 4.);
-
-            composition_transform_and_forces(r, whfast, N, N_active);
-            reb_integrator_whfast_interaction_step(r, whfast, dt / 6.);
-
-            reb_integrator_whfast_kepler_step(r, whfast, dt / 8.);
-            reb_integrator_whfast_com_step(r, whfast, dt / 8.);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -dt / 4.);
+            reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, -dt / 4.);
 
             composition_transform_and_forces(r, whfast, N, N_active);
-            reb_integrator_whfast_interaction_step(r, whfast, dt);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt / 6.);
 
-            reb_integrator_whfast_kepler_step(r, whfast, -dt / 8.);
-            reb_integrator_whfast_com_step(r, whfast, -dt / 8.);
-
-            composition_transform_and_forces(r, whfast, N, N_active);
-            reb_integrator_whfast_interaction_step(r, whfast, -dt / 6.);
-
-            reb_integrator_whfast_kepler_step(r, whfast, dt / 4.);
-            reb_integrator_whfast_com_step(r, whfast, dt / 4.);
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt / 8.);
+            reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, dt / 8.);
 
             composition_transform_and_forces(r, whfast, N, N_active);
-            reb_integrator_whfast_interaction_step(r, whfast, dt / 6.);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt);
+
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -dt / 8.);
+            reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, -dt / 8.);
+
+            composition_transform_and_forces(r, whfast, N, N_active);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, -dt / 6.);
+
+            reb_integrator_whfast_kepler_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt / 4.);
+            reb_integrator_whfast_com_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, dt / 4.);
+
+            composition_transform_and_forces(r, whfast, N, N_active);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt / 6.);
         }
         REB_INTEGRATOR_WHFAST_KERNEL_LAZY => {
             // Accelerations already calculated. WHT Eq 10.6
@@ -1276,7 +1289,7 @@ pub fn reb_integrator_whfast_step_state(
 
             // recalculate kick
             reb_simulation_update_acceleration(r);
-            reb_integrator_whfast_interaction_step(r, whfast, dt);
+            reb_integrator_whfast_interaction_step(r, &mut whfast.p_jh, &mut whfast.p_jh_var, whfast.coordinates, dt);
         }
         _ => {
             return;

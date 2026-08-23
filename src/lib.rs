@@ -45,6 +45,7 @@ pub mod integrator_sei;
 pub mod integrator_leapfrog;
 pub mod integrator_ias15;
 pub mod integrator_whfast;
+pub mod integrator_saba;
 
 pub use types::*;
 pub use tools::*;
@@ -54,8 +55,8 @@ pub use collision::*;
 pub use particle::*;
 pub use simulation::*;
 pub use output::*;
-// transformations and rotations re-exports arrive with their Phase-B
-// content (empty glob imports are a hard error under deny(warnings)).
+pub use transformations::*;
+pub use rotations::*;
 
 /// Version of the C release this crate translates (rebound.c `reb_version_str`).
 pub const reb_version_str: &str = "5.1.1";

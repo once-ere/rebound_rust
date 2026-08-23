@@ -17,7 +17,13 @@ fn main() {
     let mut sim = reb_simulation_create();
     let r = &mut sim;
     // whfast configurations are encoded as pseudo names; see the C twin.
-    let real_integrator = if integrator.starts_with("whfast") { "whfast" } else { integrator.as_str() };
+    let real_integrator = if integrator.starts_with("whfast") {
+        "whfast"
+    } else if integrator.starts_with("saba") {
+        "saba"
+    } else {
+        integrator.as_str()
+    };
     reb_simulation_set_integrator(r, real_integrator);
     if integrator == "leapfrog" {
         if let reb_integrator_state::leapfrog(ref mut lf) = r.integrator {
@@ -56,6 +62,26 @@ fn main() {
                     wh.kernel = rebound_rs::integrator_whfast::REB_INTEGRATOR_WHFAST_KERNEL_LAZY
                 }
                 "whfast-usafe" => wh.safe_mode = 0,
+                _ => {}
+            }
+        }
+    }
+    if integrator.starts_with("saba") {
+        if let reb_integrator_state::saba(ref mut sb) = r.integrator {
+            use rebound_rs::integrator_saba::*;
+            match integrator.as_str() {
+                "saba-1" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_1,
+                "saba-2" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_2,
+                "saba-3" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_3,
+                "saba-4" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_4,
+                "saba-cm2" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_CM_2,
+                "saba-cl2" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_CL_2,
+                "saba-104" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_10_4,
+                "saba-864" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_8_6_4,
+                "saba-h844" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_H_8_4_4,
+                "saba-h864" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_H_8_6_4,
+                "saba-h1064" => sb.type_ = REB_INTEGRATOR_SABA_TYPE_H_10_6_4,
+                "saba-usafe" => sb.safe_mode = 0,
                 _ => {}
             }
         }

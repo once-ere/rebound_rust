@@ -7,6 +7,7 @@
 #include "rebound.h"
 #include "integrator_leapfrog.h"
 #include "integrator_whfast.h"
+#include "integrator_saba.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,7 @@ int main(int argc, char* argv[]){
      *   whfast-usafe  safe_mode = 0 */
     const char* real_integrator = integrator;
     if (strncmp(integrator, "whfast", 6)==0) real_integrator = "whfast";
+    if (strncmp(integrator, "saba", 4)==0) real_integrator = "saba";
     void* state = reb_simulation_set_integrator(r, real_integrator);
     if (strcmp(integrator,"leapfrog")==0){
         struct reb_integrator_leapfrog_state* lf = state;
@@ -49,6 +51,21 @@ int main(int argc, char* argv[]){
         if (strcmp(integrator,"whfast-comp")==0) wh->kernel = REB_INTEGRATOR_WHFAST_KERNEL_COMPOSITION;
         if (strcmp(integrator,"whfast-lazy")==0) wh->kernel = REB_INTEGRATOR_WHFAST_KERNEL_LAZY;
         if (strcmp(integrator,"whfast-usafe")==0) wh->safe_mode = 0;
+    }
+    if (strncmp(integrator, "saba", 4)==0){
+        struct reb_integrator_saba_state* sb = state;
+        if (strcmp(integrator,"saba-1")==0)     sb->type = REB_INTEGRATOR_SABA_TYPE_1;
+        if (strcmp(integrator,"saba-2")==0)     sb->type = REB_INTEGRATOR_SABA_TYPE_2;
+        if (strcmp(integrator,"saba-3")==0)     sb->type = REB_INTEGRATOR_SABA_TYPE_3;
+        if (strcmp(integrator,"saba-4")==0)     sb->type = REB_INTEGRATOR_SABA_TYPE_4;
+        if (strcmp(integrator,"saba-cm2")==0)   sb->type = REB_INTEGRATOR_SABA_TYPE_CM_2;
+        if (strcmp(integrator,"saba-cl2")==0)   sb->type = REB_INTEGRATOR_SABA_TYPE_CL_2;
+        if (strcmp(integrator,"saba-104")==0)   sb->type = REB_INTEGRATOR_SABA_TYPE_10_4;
+        if (strcmp(integrator,"saba-864")==0)   sb->type = REB_INTEGRATOR_SABA_TYPE_8_6_4;
+        if (strcmp(integrator,"saba-h844")==0)  sb->type = REB_INTEGRATOR_SABA_TYPE_H_8_4_4;
+        if (strcmp(integrator,"saba-h864")==0)  sb->type = REB_INTEGRATOR_SABA_TYPE_H_8_6_4;
+        if (strcmp(integrator,"saba-h1064")==0) sb->type = REB_INTEGRATOR_SABA_TYPE_H_10_6_4;
+        if (strcmp(integrator,"saba-usafe")==0) sb->safe_mode = 0;
     }
     r->G = 1.0;
     r->dt = 0.01;
