@@ -1121,3 +1121,416 @@ pub fn reb_exit(msg: &str) -> ! {
     eprintln!("Error! {}", msg);
     std::process::exit(1);
 }
+
+/// tools.c `reb_orbit_from_particle_err` — the exact C entry point.
+/// The C reads the simulation time through the particle's `sim`
+/// back-pointer when computing `T`; a free-standing Rust particle has
+/// no back-pointer, so this wrapper uses t0 = 0.0 (the C behavior for
+/// `p.sim == NULL`). Use `reb_orbit_from_particle_err_t` to supply the
+/// simulation time explicitly.
+pub fn reb_orbit_from_particle_err(
+    G: f64,
+    p: reb_particle,
+    primary: reb_particle,
+    err: &mut i32,
+) -> reb_orbit {
+    reb_orbit_from_particle_err_t(G, p, primary, 0.0, err)
+}
+
+/// tools.c `reb_simulation_jacobi_com` — center of mass of all
+/// particles up to (excluding) the given one. The C takes a particle
+/// pointer and finds the index and simulation from it; here both are
+/// explicit.
+pub fn reb_simulation_jacobi_com(r: &reb_simulation, p_index: usize) -> reb_particle {
+    if p_index >= r.N {
+        return reb_particle_nan();
+    }
+    reb_simulation_com_range(r, 0, p_index)
+}
+
+/// rebound.c `reb_strcmp_ignore_whitespace`.
+pub fn reb_strcmp_ignore_whitespace(s1: &str, s2: &str) -> i32 {
+    let b1: Vec<u8> = s1.bytes().filter(|b| !b.is_ascii_whitespace()).collect();
+    let b2: Vec<u8> = s2.bytes().filter(|b| !b.is_ascii_whitespace()).collect();
+    let n = std::cmp::min(b1.len(), b2.len());
+    for i in 0..n {
+        if b1[i] != b2[i] {
+            return (b1[i] as i32) - (b2[i] as i32);
+        }
+    }
+    (b1.len() as i32) - (b2.len() as i32)
+}
+
+/// rebound.c `reb_check_fp_contract` — returns 1 if the compiler
+/// contracts a*b+c into an FMA (must be 0 for reproducibility).
+pub fn reb_check_fp_contract() -> i32 {
+    let a = 1.2382309285234567_f64;
+    let b = 2.123478623874623234567_f64;
+    let c = 6.0284234234234567_f64;
+
+    let r1 = a * b + c;
+    let ab = a * b;
+    let r2 = ab + c;
+
+    (r1 != r2) as i32
+}
+
+/// tools.c `reb_particle_solarsystem` — Solar System data taken from
+/// NASA Horizons. Used for testing.
+pub const reb_particle_solarsystem: [reb_particle; 9] = [
+    reb_particle { m: 1.00000000000000000000, x: -0.00583761661678666201, y: 0.00660036108188146939, z: 0.00008090699630593683, vx: -0.00043778026915688127, vy: -0.00027688340567327781, vz: 0.00001289781032896905, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 0 Sun
+    reb_particle { m: 0.00000016601141530543, x: -0.29485531126658365286, y: -0.34334233225957377922, z: -0.00200264586836620137, vx: 0.92896432258229966195, vy: -0.96594579119516865706, vz: -0.16415293821738913271, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 1 Mercury
+    reb_particle { m: 0.00000244783828778477, x: 0.47227261050357943750, y: 0.54819205023577255442, z: -0.02007680147008551394, vx: -0.88553481794279420569, vy: 0.77279164698675262279, vz: 0.06169738346121213246, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 2 Venus
+    reb_particle { m: 0.00000304043264802264, x: 0.97541936428768183376, y: -0.22011750964499116057, z: 0.00008866761098092638, vx: 0.20842772535763168240, vy: 0.97042888227470602835, vz: -0.00003307038073776142, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 3 Earth
+    reb_particle { m: 0.00000032271560375550, x: 1.38489786417060911639, y: -0.00373655464561763921, z: -0.03425238653564356694, vx: 0.03680838810437889880, vy: 0.88267192839777131042, vz: 0.01760188515939473466, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 4 Mars
+    reb_particle { m: 0.00095479191521124043, x: 2.31793441229397512160, y: -4.57278216881576948794, z: -0.03288979300198136002, vx: 0.38587103958050272823, vy: 0.21916457142972819994, vz: -0.00954142828183331820, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 5 Jupiter
+    reb_particle { m: 0.00028588567272224167, x: 4.97984063350991323915, y: -8.66630842281542435046, z: -0.04756566088166765821, vx: 0.26314427785251254255, vy: 0.16073015466677914587, vz: -0.01327326395768535505, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 6 Saturn
+    reb_particle { m: 0.00004366243735831270, x: 15.62435177921100226683, y: 12.13892823277256738379, z: -0.15733112984491792741, vx: -0.14195568334904265506, vy: 0.16989920313154410758, vz: 0.00247006450290807337, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 7 Uranus
+    reb_particle { m: 0.00005151383772628674, x: 29.39189844361883885426, y: -5.57834279640134234057, z: -0.56249012217889071685, vx: 0.03281663353639149155, vy: 0.18036894277947276843, vz: -0.00447061619870956460, ax: 0., ay: 0., az: 0., r: 0., name: None }, // 8 Neptune
+];
+
+/// One argument for `reb_simulation_add_fmt` (the C uses varargs; each
+/// value-taking token consumes the next entry in order).
+#[derive(Clone, Debug)]
+pub enum reb_fmt_arg {
+    /// A numeric value (C: `double` vararg).
+    d(f64),
+    /// A primary particle (C: `struct reb_particle` vararg).
+    primary(reb_particle),
+    /// A particle name (C: `char*` vararg).
+    name(String),
+}
+
+/// tools.c static `reb_string_for_particle_error`.
+fn reb_string_for_particle_error(err: i32) -> &'static str {
+    match err {
+        1 => "Cannot set e exactly to 1.",
+        2 => "Eccentricity must be greater than or equal to zero.",
+        3 => "Bound orbit (a > 0) must have e < 1.",
+        4 => "Unbound orbit (a < 0) must have e > 1.",
+        5 => "Unbound orbit can't have f beyond the range allowed by the asymptotes set by the hyperbola.",
+        6 => "Primary has no mass.",
+        7 => "Cannot mix Pal coordinates (h,k,ix,iy) with certain orbital elements (e, inc, Omega, omega, pomega, f, M, E, theta, T). Use longitude l to indicate the phase.",
+        8 => "Cannot pass cartesian coordinates and orbital elements (incl primary) at the same time.",
+        9 => "Need to pass reb_simulation object when initializing particle with orbital elements.",
+        10 => "Need to pass either semi-major axis or orbital period to initialize particle using orbital elements.",
+        11 => "Need to pass either semi-major axis or orbital period, but not both.",
+        12 => "(ix, iy) coordinates are not valid. Squared sum exceeds 4.",
+        13 => "Cannot pass both (omega, pomega) together.",
+        14 => "Can only pass one longitude/anomaly in the set (f, M, E, l, theta, T).",
+        _ => "An unknown error occurred during reb_simulation_add_fmt().",
+    }
+}
+
+/// Resolve a registered name to its index in `name_list`.
+fn name_index(r: &reb_simulation, name: &Option<String>) -> Option<usize> {
+    match name {
+        Some(n) => r.name_list.iter().position(|s| s == n),
+        None => None,
+    }
+}
+
+/// tools.c static `reb_particle_from_fmt_errV` — the token/vararg
+/// parser behind `reb_simulation_add_fmt`. The Rust arguments are an
+/// ordered slice of `reb_fmt_arg` consumed exactly like C varargs.
+#[allow(clippy::too_many_lines)]
+fn reb_particle_from_fmt_err(
+    r: &mut reb_simulation,
+    err: &mut i32,
+    fmt: &str,
+    args: &[reb_fmt_arg],
+) -> reb_particle {
+    let mut m = 0.;
+    let mut radius = 0.;
+    let mut name: Option<String> = None;
+    let mut x = f64::NAN;
+    let mut y = f64::NAN;
+    let mut z = f64::NAN;
+    let mut vx = f64::NAN;
+    let mut vy = f64::NAN;
+    let mut vz = f64::NAN;
+    let mut a = f64::NAN;
+    let mut P = f64::NAN;
+    let mut e = f64::NAN;
+    let mut inc = f64::NAN;
+    let mut Omega = f64::NAN;
+    let mut omega = f64::NAN;
+    let mut pomega = f64::NAN;
+    let mut f = f64::NAN;
+    let mut M = f64::NAN;
+    let mut E = f64::NAN;
+    let mut l = f64::NAN;
+    let mut theta = f64::NAN;
+    let mut T = f64::NAN;
+    let mut h = f64::NAN;
+    let mut k = f64::NAN;
+    let mut ix = f64::NAN;
+    let mut iy = f64::NAN;
+    let mut primary = reb_particle::default();
+    let mut primary_given = false;
+
+    let mut ai = 0usize; // vararg cursor
+    fn next_d(args: &[reb_fmt_arg], ai: &mut usize) -> f64 {
+        let v = match args.get(*ai) {
+            Some(reb_fmt_arg::d(v)) => *v,
+            _ => 0.,
+        };
+        *ai += 1;
+        v
+    }
+
+    for token in fmt.split(|c: char| " \t\n,;".contains(c)) {
+        if token.is_empty() {
+            continue;
+        }
+        match token {
+            "m" => m = next_d(args, &mut ai),
+            "r" => radius = next_d(args, &mut ai),
+            "x" => x = next_d(args, &mut ai),
+            "y" => y = next_d(args, &mut ai),
+            "z" => z = next_d(args, &mut ai),
+            "vx" => vx = next_d(args, &mut ai),
+            "vy" => vy = next_d(args, &mut ai),
+            "vz" => vz = next_d(args, &mut ai),
+            "a" => a = next_d(args, &mut ai),
+            "P" => P = next_d(args, &mut ai),
+            "e" => e = next_d(args, &mut ai),
+            "inc" => inc = next_d(args, &mut ai),
+            "uniform(inc)" => inc = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "Omega" => Omega = next_d(args, &mut ai),
+            "uniform(Omega)" => Omega = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "omega" => omega = next_d(args, &mut ai),
+            "uniform(omega)" => omega = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "pomega" => pomega = next_d(args, &mut ai),
+            "uniform(pomega)" => pomega = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "f" => f = next_d(args, &mut ai),
+            "uniform(f)" => f = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "M" => M = next_d(args, &mut ai),
+            "uniform(M)" => M = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "E" => E = next_d(args, &mut ai),
+            "uniform(E)" => E = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "l" => l = next_d(args, &mut ai),
+            "uniform(l)" => l = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "theta" => theta = next_d(args, &mut ai),
+            "uniform(theta)" => theta = reb_random_uniform(Some(&mut *r), 0.0, 2.0 * M_PI),
+            "T" => T = next_d(args, &mut ai),
+            "h" => h = next_d(args, &mut ai),
+            "k" => k = next_d(args, &mut ai),
+            "ix" => ix = next_d(args, &mut ai),
+            "iy" => iy = next_d(args, &mut ai),
+            "primary" => {
+                if let Some(reb_fmt_arg::primary(p)) = args.get(ai) {
+                    primary = *p;
+                    primary_given = true;
+                }
+                ai += 1;
+            }
+            "name" => {
+                if let Some(reb_fmt_arg::name(n)) = args.get(ai) {
+                    crate::particle::reb_simulation_register_name(r, n);
+                    name = Some(n.clone());
+                }
+                ai += 1;
+            }
+            _ => {}
+        }
+    }
+
+    let mut Ncart = 0;
+    if !x.is_nan() { Ncart += 1; }
+    if !y.is_nan() { Ncart += 1; }
+    if !z.is_nan() { Ncart += 1; }
+    if !vx.is_nan() { Ncart += 1; }
+    if !vy.is_nan() { Ncart += 1; }
+    if !vz.is_nan() { Ncart += 1; }
+
+    let mut Norb = 0;
+    if primary_given { Norb += 1; }
+    if !a.is_nan() { Norb += 1; }
+    if !P.is_nan() { Norb += 1; }
+    if !e.is_nan() { Norb += 1; }
+    if !inc.is_nan() { Norb += 1; }
+    if !Omega.is_nan() { Norb += 1; }
+    if !omega.is_nan() { Norb += 1; }
+    if !pomega.is_nan() { Norb += 1; }
+    if !f.is_nan() { Norb += 1; }
+    if !M.is_nan() { Norb += 1; }
+    if !E.is_nan() { Norb += 1; }
+    if !l.is_nan() { Norb += 1; }
+    if !theta.is_nan() { Norb += 1; }
+    if !T.is_nan() { Norb += 1; }
+
+    let mut Nnonpal = 0;
+    if primary_given { Nnonpal += 1; }
+    if !e.is_nan() { Nnonpal += 1; }
+    if !inc.is_nan() { Nnonpal += 1; }
+    if !Omega.is_nan() { Nnonpal += 1; }
+    if !omega.is_nan() { Nnonpal += 1; }
+    if !pomega.is_nan() { Nnonpal += 1; }
+    if !f.is_nan() { Nnonpal += 1; }
+    if !M.is_nan() { Nnonpal += 1; }
+    if !E.is_nan() { Nnonpal += 1; }
+    if !theta.is_nan() { Nnonpal += 1; }
+    if !T.is_nan() { Nnonpal += 1; }
+
+    let mut Npal = 0;
+    if !h.is_nan() { Npal += 1; }
+    if !k.is_nan() { Npal += 1; }
+    if !ix.is_nan() { Npal += 1; }
+    if !iy.is_nan() { Npal += 1; }
+
+    let mut Nlong = 0;
+    if !f.is_nan() { Nlong += 1; }
+    if !M.is_nan() { Nlong += 1; }
+    if !E.is_nan() { Nlong += 1; }
+    if !l.is_nan() { Nlong += 1; }
+    if !theta.is_nan() { Nlong += 1; }
+    if !T.is_nan() { Nlong += 1; }
+
+    if Nnonpal > 0 && Npal > 0 {
+        *err = 7; // cannot mix pal and orbital elements
+        return reb_particle_nan();
+    }
+    if Ncart > 0 && Norb > 0 {
+        *err = 8; // cannot mix cartesian and orbital elements
+        return reb_particle_nan();
+    }
+
+    if Ncart != 0 || Norb == 0 {
+        // Cartesian coordinates given, or no coordinates whatsoever
+        let mut particle = reb_particle::default();
+        particle.name = name_index(r, &name);
+        particle.m = m;
+        particle.r = radius;
+        if !x.is_nan() { particle.x = x; } // Note: if x is nan, then particle.x is 0
+        if !y.is_nan() { particle.y = y; }
+        if !z.is_nan() { particle.z = z; }
+        if !vx.is_nan() { particle.vx = vx; }
+        if !vy.is_nan() { particle.vy = vy; }
+        if !vz.is_nan() { particle.vz = vz; }
+        return particle;
+    }
+
+    if !primary_given {
+        primary = reb_simulation_com(r);
+    }
+    // Note: jacobi_masses not yet implemented (same as the C).
+
+    if a.is_nan() && P.is_nan() {
+        *err = 10; // need a or P
+        return reb_particle_nan();
+    }
+    if !a.is_nan() && !P.is_nan() {
+        *err = 11; // not both a and P
+        return reb_particle_nan();
+    }
+    if a.is_nan() {
+        a = (P * P * r.G * (primary.m + m) / (4. * M_PI * M_PI)).cbrt();
+    }
+    if Npal > 0 {
+        if l.is_nan() { l = 0.; }
+        if h.is_nan() { h = 0.; }
+        if k.is_nan() { k = 0.; }
+        if ix.is_nan() { ix = 0.; }
+        if iy.is_nan() { iy = 0.; }
+        if (ix * ix + iy * iy) > 4.0 {
+            *err = 12; // e too high
+            return reb_particle_nan();
+        }
+        let mut particle = reb_particle_from_pal(r.G, primary, m, a, l, k, h, ix, iy);
+        particle.r = radius;
+        particle.name = name_index(r, &name);
+        return particle;
+    }
+
+    if e.is_nan() { e = 0.; }
+    if inc.is_nan() { inc = 0.; }
+    if Omega.is_nan() { Omega = 0.; }
+
+    if !omega.is_nan() && !pomega.is_nan() {
+        *err = 13; // Can't pass omega and pomega
+        return reb_particle_nan();
+    }
+    if omega.is_nan() && pomega.is_nan() { omega = 0.; }
+    if !pomega.is_nan() {
+        if inc.cos() > 0. {
+            omega = pomega - Omega;
+        } else {
+            omega = Omega - pomega; // retrograde orbits
+        }
+    }
+
+    if Nlong > 1 {
+        *err = 14; // only one longitude
+        return reb_particle_nan();
+    }
+    if Nlong == 0 {
+        f = 0.;
+    }
+    if Nlong == 1 {
+        if !theta.is_nan() {
+            if inc.cos() > 0. {
+                f = theta - Omega - omega;
+            } else {
+                f = Omega - omega - theta; // retrograde
+            }
+        }
+        if !l.is_nan() {
+            if inc.cos() > 0. {
+                M = l - Omega - omega; // M will be converted to f below
+            } else {
+                M = Omega - omega - l; // retrograde
+            }
+        }
+        if !T.is_nan() {
+            let n = (r.G * (primary.m + m) / (a * a * a).abs()).sqrt();
+            M = n * (r.t - T);
+        }
+        if !M.is_nan() {
+            f = reb_M_to_f(e, M);
+        }
+        if !E.is_nan() {
+            f = reb_E_to_f(e, E);
+        }
+    }
+    let mut particle =
+        reb_particle_from_orbit_err(r.G, primary, m, a, e, inc, Omega, omega, f, err);
+    particle.r = radius;
+    particle.name = name_index(r, &name);
+    particle
+}
+
+/// tools.c `reb_simulation_add_fmt`. The C is a varargs function; the
+/// Rust version takes the values as an ordered `reb_fmt_arg` slice.
+pub fn reb_simulation_add_fmt(r: &mut reb_simulation, fmt: &str, args: &[reb_fmt_arg]) {
+    if reb_strcmp_ignore_whitespace("outer solar system", fmt) == 0 {
+        if r.G != 1.0 {
+            reb_simulation_warning(r, "G should be 1.0 when using a built-in test dataset.");
+        }
+        crate::particle::reb_simulation_add(r, reb_particle_solarsystem[0]);
+        for i in 5..9 {
+            crate::particle::reb_simulation_add(r, reb_particle_solarsystem[i]);
+        }
+        return;
+    }
+    if reb_strcmp_ignore_whitespace("solar system", fmt) == 0 {
+        if r.G != 1.0 {
+            reb_simulation_warning(r, "G should be 1.0 when using a built-in test dataset.");
+        }
+        for i in 0..9 {
+            crate::particle::reb_simulation_add(r, reb_particle_solarsystem[i]);
+        }
+        return;
+    }
+
+    let mut err = 0;
+    let particle = reb_particle_from_fmt_err(r, &mut err, fmt, args);
+
+    if err == 0 {
+        // Success
+        crate::particle::reb_simulation_add(r, particle);
+    } else {
+        let error_string = reb_string_for_particle_error(err);
+        reb_simulation_error(r, error_string);
+    }
+}
