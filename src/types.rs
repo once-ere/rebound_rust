@@ -211,7 +211,7 @@ pub struct reb_variational_configuration {
 pub enum reb_integrator_state {
     none,
     sei(crate::integrator_sei::reb_integrator_sei_state),
-    leapfrog,
+    leapfrog(crate::integrator_leapfrog::reb_integrator_leapfrog_state),
     ias15(crate::integrator_ias15::reb_integrator_ias15_state),
     whfast(crate::integrator_whfast::reb_integrator_whfast_state),
 }
@@ -221,7 +221,7 @@ impl reb_integrator_state {
         match self {
             reb_integrator_state::none => "none",
             reb_integrator_state::sei(_) => "sei",
-            reb_integrator_state::leapfrog => "leapfrog",
+            reb_integrator_state::leapfrog(_) => "leapfrog",
             reb_integrator_state::ias15(_) => "ias15",
             reb_integrator_state::whfast(_) => "whfast",
         }

@@ -122,7 +122,11 @@ pub fn reb_simulation_set_integrator(r: &mut reb_simulation, name: &str) {
                 crate::integrator_sei::reb_integrator_sei_state::default(),
             )
         }
-        "leapfrog" => r.integrator = reb_integrator_state::leapfrog,
+        "leapfrog" => {
+            r.integrator = reb_integrator_state::leapfrog(
+                crate::integrator_leapfrog::reb_integrator_leapfrog_state::default(),
+            )
+        }
         "ias15" => {
             r.integrator = reb_integrator_state::ias15(
                 crate::integrator_ias15::reb_integrator_ias15_state::default(),
@@ -269,7 +273,7 @@ pub fn reb_simulation_step(r: &mut reb_simulation) {
     match r.integrator {
         reb_integrator_state::none => crate::integrator_none::reb_integrator_none_step(r),
         reb_integrator_state::sei(_) => crate::integrator_sei::reb_integrator_sei_step(r),
-        reb_integrator_state::leapfrog => {
+        reb_integrator_state::leapfrog(_) => {
             crate::integrator_leapfrog::reb_integrator_leapfrog_step(r)
         }
         reb_integrator_state::ias15(_) => crate::integrator_ias15::reb_integrator_ias15_step(r),
