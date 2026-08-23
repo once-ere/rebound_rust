@@ -1,0 +1,10 @@
+target/
+*.obj
+*.exe
+porttest/*.exe
+porttest/*.obj
+porttest/librebound.*
+porttest/libm_*.txt
+porttest/state_*.txt
+porttest/*.log
+logs/libm_c.txt
