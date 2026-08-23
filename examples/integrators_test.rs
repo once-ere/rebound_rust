@@ -27,6 +27,8 @@ fn main() {
         "eos"
     } else if integrator.starts_with("mercurius") {
         "mercurius"
+    } else if integrator.starts_with("bs") {
+        "bs"
     } else {
         integrator.as_str()
     };
@@ -127,6 +129,23 @@ fn main() {
                 "mercurius-c5" => mc.L = reb_integrator_mercurius_L_C5,
                 "mercurius-inf" => mc.L = reb_integrator_mercurius_L_infinity,
                 "mercurius-hill01" => mc.r_crit_hill = 0.1,
+                _ => {}
+            }
+        }
+    }
+    if integrator.starts_with("bs") {
+        if let reb_integrator_state::bs(ref mut b) = r.integrator {
+            // see the C twin for the pseudo-name catalogue
+            match integrator.as_str() {
+                "bs-tight" => {
+                    b.eps_abs = 1e-11;
+                    b.eps_rel = 1e-11;
+                }
+                "bs-loose" => {
+                    b.eps_abs = 1e-6;
+                    b.eps_rel = 1e-6;
+                }
+                "bs-maxdt" => b.max_dt = 0.02,
                 _ => {}
             }
         }

@@ -49,6 +49,7 @@ pub mod integrator_saba;
 pub mod integrator_janus;
 pub mod integrator_eos;
 pub mod integrator_mercurius;
+pub mod integrator_bs;
 
 pub use types::*;
 pub use tools::*;

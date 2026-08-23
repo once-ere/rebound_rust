@@ -218,6 +218,7 @@ pub enum reb_integrator_state {
     janus(crate::integrator_janus::reb_integrator_janus_state),
     eos(crate::integrator_eos::reb_integrator_eos_state),
     mercurius(crate::integrator_mercurius::reb_integrator_mercurius_state),
+    bs(crate::integrator_bs::reb_integrator_bs_state),
 }
 
 impl reb_integrator_state {
@@ -232,6 +233,7 @@ impl reb_integrator_state {
             reb_integrator_state::janus(_) => "janus",
             reb_integrator_state::eos(_) => "eos",
             reb_integrator_state::mercurius(_) => "mercurius",
+            reb_integrator_state::bs(_) => "bs",
         }
     }
 }
@@ -276,6 +278,13 @@ pub struct reb_simulation {
     pub N_var: usize,
     pub particles_var: Vec<reb_particle>,
     pub var_config: Vec<reb_variational_configuration>,
+
+    /// ODE sets (C: `struct reb_ode** odes` + N_odes; includes the
+    /// nbody ode if BS is set as integrator). N_odes == odes.len().
+    pub odes: Vec<crate::integrator_bs::reb_ode>,
+    /// Rust-side id source for `reb_ode::id` (the C identifies odes by
+    /// pointer).
+    pub ode_id_next: usize,
 
     pub N_active: usize,
     pub testparticle_type: i32,

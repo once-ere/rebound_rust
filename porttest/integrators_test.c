@@ -11,6 +11,7 @@
 #include "integrator_janus.h"
 #include "integrator_eos.h"
 #include "integrator_mercurius.h"
+#include "integrator_bs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +42,7 @@ int main(int argc, char* argv[]){
     if (strncmp(integrator, "janus", 5)==0) real_integrator = "janus";
     if (strncmp(integrator, "eos", 3)==0) real_integrator = "eos";
     if (strncmp(integrator, "mercurius", 9)==0) real_integrator = "mercurius";
+    if (strncmp(integrator, "bs", 2)==0) real_integrator = "bs";
     void* state = reb_simulation_set_integrator(r, real_integrator);
     if (strcmp(integrator,"leapfrog")==0){
         struct reb_integrator_leapfrog_state* lf = state;
@@ -102,6 +104,16 @@ int main(int argc, char* argv[]){
         if (strcmp(integrator,"mercurius-c5")==0)     mc->L = reb_integrator_mercurius_L_C5;
         if (strcmp(integrator,"mercurius-inf")==0)    mc->L = reb_integrator_mercurius_L_infinity;
         if (strcmp(integrator,"mercurius-hill01")==0) mc->r_crit_hill = 0.1;
+    }
+    if (strncmp(integrator, "bs", 2)==0){
+        struct reb_integrator_bs_state* b = state;
+        /* bs         default (eps_abs = eps_rel = 1e-8)
+         * bs-tight   eps_abs = eps_rel = 1e-11
+         * bs-loose   eps_abs = eps_rel = 1e-6
+         * bs-maxdt   max_dt = 0.02 */
+        if (strcmp(integrator,"bs-tight")==0){ b->eps_abs = 1e-11; b->eps_rel = 1e-11; }
+        if (strcmp(integrator,"bs-loose")==0){ b->eps_abs = 1e-6;  b->eps_rel = 1e-6; }
+        if (strcmp(integrator,"bs-maxdt")==0){ b->max_dt = 0.02; }
     }
     r->G = 1.0;
     r->dt = 0.01;

@@ -36,6 +36,8 @@ pub fn reb_simulation_create() -> reb_simulation {
         N_var: 0,
         particles_var: Vec::new(),
         var_config: Vec::new(),
+        odes: Vec::new(),
+        ode_id_next: 1,
         N_active: usize::MAX,
         testparticle_type: 0,
         testparticle_hidewarnings: 0,
@@ -155,6 +157,11 @@ pub fn reb_simulation_set_integrator(r: &mut reb_simulation, name: &str) {
         "mercurius" => {
             r.integrator = reb_integrator_state::mercurius(
                 crate::integrator_mercurius::reb_integrator_mercurius_state::default(),
+            )
+        }
+        "bs" => {
+            r.integrator = reb_integrator_state::bs(
+                crate::integrator_bs::reb_integrator_bs_state::default(),
             )
         }
         _ => reb_simulation_error(r, "Integrator not found."),
@@ -281,7 +288,7 @@ fn reb_check_exit(r: &mut reb_simulation, tmax: f64, last_full_dt: &mut f64) -> 
             r.status = REB_STATUS_SUCCESS; // Exit now.
         }
     }
-    if r.N == 0 {
+    if r.N == 0 && r.odes.is_empty() {
         reb_simulation_warning(r, "No particles in simulation. Will exit.");
         r.status = REB_STATUS_NO_PARTICLES; // Exit now.
     }
@@ -311,6 +318,32 @@ pub fn reb_simulation_step(r: &mut reb_simulation) {
         reb_integrator_state::eos(_) => crate::integrator_eos::reb_integrator_eos_step(r),
         reb_integrator_state::mercurius(_) => {
             crate::integrator_mercurius::reb_integrator_mercurius_step(r)
+        }
+        reb_integrator_state::bs(_) => crate::integrator_bs::reb_integrator_bs_step(r),
+    }
+
+    // Integrate other ODEs (simulation.c: user ODEs are advanced with a
+    // temporary BS state when the main integrator is not BS).
+    if !r.odes.is_empty() && !matches!(r.integrator, reb_integrator_state::bs(_)) {
+        let mut dt = r.dt_last_done;
+        let mut t = r.t - r.dt_last_done; // Note: floating point inaccuracy
+        let forward = if dt > 0. { 1. } else { -1. };
+        let mut bs = crate::integrator_bs::reb_integrator_bs_state::default();
+        while t * forward < r.t * forward && ((r.t - t) / (r.t.abs() + 1e-16)).abs() > 1e-15 {
+            if bs.dt_proposed != 0. {
+                let max_dt = (r.t - t).abs();
+                dt = bs.dt_proposed.abs();
+                if dt > max_dt {
+                    // Don't overshoot N-body timestep
+                    dt = max_dt;
+                    bs.first_or_last_step = 1;
+                }
+                dt *= forward;
+            }
+            let success = crate::integrator_bs::reb_integrator_bs_step_odes(r, &mut bs, dt);
+            if success != 0 {
+                t += dt;
+            }
         }
     }
 
