@@ -1163,6 +1163,41 @@ the adaptive-step restart arrays). Archive files, including the incremental
 diff-blob append format, are fully interchangeable between the C and Rust
 builds.
 
+#### Why the `.bin` files are not committed
+
+Run the commands above and `porttest\` fills with `archive_c_*.bin` and
+`archive_rust_*.bin`. Those files are **not** kept in this repository, and the
+reason is worth knowing, because it is a real difference between the two
+languages that the rest of this document does not otherwise show.
+
+A C `struct` usually contains *padding* — unused bytes the compiler inserts so
+that each member starts at an address the processor likes. When C writes a
+whole struct to a file in one go, it writes the padding too, and nothing
+requires the padding to have been set to anything. It holds whatever happened
+to be in that memory beforehand.
+
+Inspecting the committed `archive_c_whfast-usafe.bin` showed exactly that. Six
+times over, sitting between two perfectly ordinary floating-point numbers, was
+a fragment of text that had nothing to do with the simulation:
+
+```
+AppData\Local\pnpm;C:\Users\...\.lmstudio\bin;C:\Users\
+```
+
+That is a piece of the `PATH` environment variable of the machine that wrote
+the file — leftover heap memory, captured and published by accident. It is
+harmless here, but the same mechanism could just as easily have caught
+something that mattered.
+
+**The Rust port does not do this.** Safe Rust has no uninitialised memory: the
+port builds its output buffer explicitly, so its padding bytes are zero. The
+`archive_rust_*.bin` files contain no such fragments — checked, and they are
+clean.
+
+So the `.bin` files are treated as what they are — regenerable output — and
+`porttest/*.bin` is in `.gitignore`. Nothing is lost: every command needed to
+recreate them is printed above, and the comparison is the point, not the files.
+
 ### 15.6 The web server
 
 The Rust example pauses a 100-step simulation and serves it over HTTP; the

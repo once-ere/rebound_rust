@@ -1062,6 +1062,24 @@ cd C:\work\rebound_rust\porttest
 
 \textbf{Result: identical in all four directions}, for \texttt{whfast-usafe} (which round-trips unsynchronised Jacobi coordinates) and \texttt{ias15} (which round-trips the adaptive-step restart arrays). Archive files, including the incremental diff-blob append format, are fully interchangeable between the C and Rust builds.
 
+\subsubsection{Why the \texttt{.bin} files are not committed}
+
+Run the commands above and \texttt{porttest\textbackslash{}} fills with \texttt{archive\_c\_*.bin} and \texttt{archive\_rust\_*.bin}. Those files are \textbf{not} kept in this repository, and the reason is worth knowing, because it is a real difference between the two languages that the rest of this document does not otherwise show.
+
+A C \texttt{struct} usually contains \emph{padding} --- unused bytes the compiler inserts so that each member starts at an address the processor likes. When C writes a whole struct to a file in one go, it writes the padding too, and nothing requires the padding to have been set to anything. It holds whatever happened to be in that memory beforehand.
+
+Inspecting the committed \texttt{archive\_c\_whfast-usafe.bin} showed exactly that. Six times over, sitting between two perfectly ordinary floating-point numbers, was a fragment of text that had nothing to do with the simulation:
+
+\begin{lstlisting}
+AppData\Local\pnpm;C:\Users\...\.lmstudio\bin;C:\Users\
+\end{lstlisting}
+
+That is a piece of the \texttt{PATH} environment variable of the machine that wrote the file --- leftover heap memory, captured and published by accident. It is harmless here, but the same mechanism could just as easily have caught something that mattered.
+
+\textbf{The Rust port does not do this.} Safe Rust has no uninitialised memory: the port builds its output buffer explicitly, so its padding bytes are zero. The \texttt{archive\_rust\_*.bin} files contain no such fragments --- checked, and they are clean.
+
+So the \texttt{.bin} files are treated as what they are --- regenerable output --- and \texttt{porttest/*.bin} is in \texttt{.gitignore}. Nothing is lost: every command needed to recreate them is printed above, and the comparison is the point, not the files.
+
 \subsection{15.6 The web server}
 
 The Rust example pauses a 100-step simulation and serves it over HTTP; the blob is then loaded by the C build.
