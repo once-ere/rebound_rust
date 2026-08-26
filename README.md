@@ -226,12 +226,13 @@ reporting anything upstream.
 | `rebound_rust.md` / `.pdf` | **the master document**: complete instructions, provenance and verification for both ports |
 | `shearing_sheet_port_test.md` | the shearing-sheet acceptance test, in full |
 | `reboundx_port_test.md` | the REBOUNDx `tides_spin` acceptance tests, in full |
-| `../reboundx_rust/` | the REBOUNDx translation |
-| `backups/` | timestamped backups taken before each editing session |
+| [`once-ere/reboundx_rust`](https://github.com/once-ere/reboundx_rust) | the REBOUNDx translation — its own repository, cloned as a sibling of this one |
 
 ---
 
 ## Related projects
+
+Its companion is [`once-ere/reboundx_rust`](https://github.com/once-ere/reboundx_rust) (`reboundx_rs` 5.1.0), the pure-Rust translation of **REBOUNDx**, which depends on this crate and expects to be cloned beside it — the same arrangement the C REBOUNDx requires of the C REBOUND.
 
 This port was produced as the physics acceptance test of
 [`rustSolveIt_Win11_SUNDIALS_7_8_0`](https://github.com/once-ere/rustSolveIt_Win11_SUNDIALS_7_8_0),
