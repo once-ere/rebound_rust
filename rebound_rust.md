@@ -215,7 +215,7 @@ Let us simulate a star with one planet.
 **Step 1 — make a new project.**
 
 ```bash
-cd C:\Users\<you>\Desktop
+cd C:\Users\youruser\Desktop
 cargo new my_first_simulation
 cd my_first_simulation
 ```
@@ -628,7 +628,7 @@ no Clang involved at any point.
 | C compiler | MSVC `cl` 19.51.36256 for x64 (Visual Studio 2026 Build Tools) |
 | Compiler environment script | `C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat` |
 | make | GnuWin32 Make 3.81 |
-| vcpkg | `C:\Users\<you>\vcpkg\vcpkg.exe` |
+| vcpkg | `C:\Users\youruser\vcpkg\vcpkg.exe` |
 | Rust | `rustc 1.91.1 (ed61e7d7e 2025-11-07)`, `cargo 1.91.1`, target `x86_64-pc-windows-msvc` |
 | REBOUND source | github.com/hannorein/rebound, **5.1.1**, commit `dad5f97806ecbb408dcaff728851c64e67f9f6eb` |
 | REBOUNDx source | github.com/dtamayo/reboundx, **5.1.0** |
@@ -639,10 +639,10 @@ REBOUND's native 3-D viewer uses a library called GLFW on Linux and macOS. It
 was installed for future use:
 
 ```bash
-C:\Users\<you>\vcpkg\vcpkg.exe install glfw3:x64-windows
+C:\Users\youruser\vcpkg\vcpkg.exe install glfw3:x64-windows
 ```
 
-This gave glfw3 **3.5.1** (`C:\Users\<you>\vcpkg\installed\x64-windows\lib\glfw3dll.lib`).
+This gave glfw3 **3.5.1** (`C:\Users\youruser\vcpkg\installed\x64-windows\lib\glfw3dll.lib`).
 However, **REBOUND's own build system forces OpenGL off on Windows**
 (`src/Makefile.defs` line 21 prints "OpenGL not supported on Windows. Setting
 OPENGL=0"), so the C reference does not link GLFW, and visualisation is done
