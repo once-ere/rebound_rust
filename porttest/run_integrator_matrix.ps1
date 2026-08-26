@@ -5,6 +5,14 @@
 # Usage:   .\run_integrator_matrix.ps1  [nsteps]
 # Default nsteps = 500, which is what section 15.1 of rebound_rust.md records.
 #
+# NOTE: every harness in this folder writes its dump to the same two
+# filenames, state_c_final.txt and state_rust_final.txt. This script
+# consumes them (renaming each pair to matrix_c.txt / matrix_rust.txt
+# before comparing), so after it runs, the shearing-sheet dumps are gone.
+# Re-create them by re-running that pair:
+#     .\problem_test.exe
+#     ..\target\release\examples\shearing_sheet_test.exe
+#
 # Part of the rebound_rs verification suite, GPL-3.0-or-later.
 
 param([int]$nsteps = 500)

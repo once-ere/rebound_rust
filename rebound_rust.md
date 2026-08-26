@@ -1016,6 +1016,23 @@ ALL CONFIGURATIONS BIT-IDENTICAL
 
 **Result: 63 of 63 configurations bit-identical.**
 
+One thing to know before you run it: **every harness in `porttest\` writes
+its results to the same two filenames**, `state_c_final.txt` and
+`state_rust_final.txt`. That is deliberate — it keeps the comparison
+command identical for every test — but it means each run overwrites the
+last one's dumps, and the sweep script above consumes them. If you run the
+sweep and then try to check the shearing sheet, you will find the shearing
+sheet's files gone. Just re-run that pair to recreate them:
+
+```powershell
+cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+.\rebound_test.exe 400
+..\target\release\examples\shearing_sheet_test.exe 400
+```
+
+(`rebound_test.exe` is the compiled `problem_test.c`, the C side of the
+shearing-sheet test.)
+
 | Integrator | Configurations tested (all identical) |
 |---|---|
 | none | `none` |
@@ -1058,10 +1075,29 @@ Get-FileHash state_rust_final.txt -Algorithm SHA256
 
 Timing on this machine: C 2.2 s, Rust 1.7 s.
 
-The full story of this test — including how the *first* attempt failed and how
-we tracked the cause to `pow` — is told at length in
-`shearing_sheet_port_test.md`, which repeats every command so it can be read
-alone.
+This test did not pass on the first attempt. 330 particles had drifted, and the
+cause turned out to be `pow` — the one library function where Rust and
+Microsoft's C disagree. The investigation is worth summarising, because it is
+the clearest illustration of how a 1-ULP difference becomes a visible one.
+
+The two runs stayed identical for 77 steps and separated at step 78, in the
+collision between particles 390 and 1,456. The Bridges coefficient-of-restitution
+law computes `0.32 * pow(v, -0.234)`. At that one impact speed Rust's `pow` and
+Microsoft's differed in the last bit — about one part in 10^16. That changed the
+bounce by one bit, which changed where both particles were on the next step,
+which changed which tree cells they landed in, which changed the *set* of
+collisions found, and from there the two runs diverged completely.
+
+The fix was not to change any physics. Rewriting the identical formula as
+`exp(-0.234 * log(v))` on **both** sides — C and Rust — removes the only
+divergent function from the calculation, and the entire run becomes bit-identical.
+`exp` and `log` agree exactly on this platform; only `pow` does not. This is
+covered in full in section 16.
+
+Two Windows-specific traps also cost time here and are worth knowing: the C
+example seeds its generator from the clock and process id (pinned to seed 42 for
+the comparison), and the stock example never terminates, which is why the
+comparison uses the `_test` variants on both sides.
 
 ### 15.3 Orbital derivatives — 65 functions
 
