@@ -166,13 +166,40 @@ pub fn reb_simulationarchive_read_from_stream_with_messages(
             if c1 == 0 || c2 == 0 || c3 == 0 {
                 *warnings |= REB_BINARYDATA_WARNING_CORRUPTFILE;
             } else {
+                // C's `atoi`, faithfully: skip leading whitespace, take an
+                // optional sign, then the run of digits, and yield 0 if
+                // there are none.
+                //
+                // The whitespace skip is load-bearing. The header reads
+                // "REBOUND Binary File. Version: 5.1.1" and the C splits it
+                // at the ':' and the two '.'s, so the major-version substring
+                // is " 5" WITH the leading space. C's atoi(" 5") is 5; a
+                // digits-only scan stops at the space and yields 0, which
+                // silently reported major version 0 for every archive.
                 let atoi = |bytes: &[u8]| -> i32 {
-                    let s: String = bytes
-                        .iter()
+                    let mut it = bytes.iter().peekable();
+                    while let Some(b) = it.peek() {
+                        // C: isspace()
+                        if matches!(**b, b' ' | b'\t' | b'\n' | b'\x0b' | b'\x0c' | b'\r') {
+                            it.next();
+                        } else {
+                            break;
+                        }
+                    }
+                    let mut sign = 1i32;
+                    if let Some(b) = it.peek() {
+                        if **b == b'-' {
+                            sign = -1;
+                            it.next();
+                        } else if **b == b'+' {
+                            it.next();
+                        }
+                    }
+                    let s: String = it
                         .take_while(|b| b.is_ascii_digit())
                         .map(|&b| b as char)
                         .collect();
-                    s.parse().unwrap_or(0)
+                    sign * s.parse::<i32>().unwrap_or(0)
                 };
                 sa.reb_version_patch = atoi(&readbuf[c3 + 1..std::cmp::min(c3 + 4, bufsize)]);
                 sa.reb_version_minor = atoi(&readbuf[c2 + 1..c3]);

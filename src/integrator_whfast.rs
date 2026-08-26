@@ -386,7 +386,16 @@ pub fn reb_integrator_whfast_kepler_solver(
                 X_min = X;
             }
             X = (X_max + X_min) / 2.;
-            if fastabs(X_max - X_min) <= fastabs((X_max + X_min) * 1e-15) {
+            // C: `} while (fastabs(X_max-X_min) > fastabs((X_max+X_min)*1e-15));`
+            //
+            // The negation MUST be written as `!(a > b)`, not as `a <= b`.
+            // They differ when either side is NaN, which really happens here:
+            // for (near-)rectilinear hyperbolic motion the pericentre q is
+            // ~0, so X_max = dt/q is +inf and X_min = dt/(|vq*dt|+r0) is NaN.
+            // With NaN, `a > b` is false and the C loop exits after one pass,
+            // whereas `a <= b` is ALSO false, so an `if a <= b { break }`
+            // never breaks and the solver hangs.
+            if !(fastabs(X_max - X_min) > fastabs((X_max + X_min) * 1e-15)) {
                 break;
             }
         }

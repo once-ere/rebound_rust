@@ -182,26 +182,148 @@ pub fn reb_simulation_move_to_com(r: &mut reb_simulation) {
     let com = reb_simulation_com(r);
     let N = r.N;
 
-    // First order variational shift (2nd order not carried: the C block
-    // is only reachable with 2nd-order variational particles, which are
-    // added by derivatives-based workflows; a run that needs them gets
-    // a clear error instead of silent wrong physics).
+    // PASS 1: second order. The C runs ALL order-2 configurations before
+    // ANY order-1 configuration, because the order-2 shift reads the
+    // order-1 variational particles and must see them pre-shift. Keeping
+    // the two passes separate is therefore load-bearing, not cosmetic.
     for v in 0..r.var_config.len() {
         let vc = r.var_config[v];
+        let index = vc.index;
         if vc.testparticle >= 0 {
             // Test particles do not affect the COM
         } else if vc.order == 2 {
-            reb_simulation_error(
-                r,
-                "move_to_com with 2nd order variational particles is not carried in rebound_rs.",
-            );
-            return;
+            let mut com_shift = reb_particle::default();
+            let index_1st_order_a = vc.index_1st_order_a;
+            let index_1st_order_b = vc.index_1st_order_b;
+            let mut dma = 0.;
+            let mut dmb = 0.;
+            let mut ddm = 0.;
+            for i in 0..N {
+                dma += r.particles_var[i + index_1st_order_a].m;
+                dmb += r.particles_var[i + index_1st_order_b].m;
+                ddm += r.particles_var[i + index].m;
+            }
+            for i in 0..N {
+                let p = r.particles[i];
+                let pv = r.particles_var[i + index];
+                let pa = r.particles_var[i + index_1st_order_a];
+                let pb = r.particles_var[i + index_1st_order_b];
+
+                com_shift.x += pv.x / com.m * p.m;
+                com_shift.y += pv.y / com.m * p.m;
+                com_shift.z += pv.z / com.m * p.m;
+                com_shift.vx += pv.vx / com.m * p.m;
+                com_shift.vy += pv.vy / com.m * p.m;
+                com_shift.vz += pv.vz / com.m * p.m;
+
+                com_shift.x += pa.x / com.m * pb.m;
+                com_shift.y += pa.y / com.m * pb.m;
+                com_shift.z += pa.z / com.m * pb.m;
+                com_shift.vx += pa.vx / com.m * pb.m;
+                com_shift.vy += pa.vy / com.m * pb.m;
+                com_shift.vz += pa.vz / com.m * pb.m;
+
+                com_shift.x -= pa.x * p.m / com.m / com.m * dmb;
+                com_shift.y -= pa.y * p.m / com.m / com.m * dmb;
+                com_shift.z -= pa.z * p.m / com.m / com.m * dmb;
+                com_shift.vx -= pa.vx * p.m / com.m / com.m * dmb;
+                com_shift.vy -= pa.vy * p.m / com.m / com.m * dmb;
+                com_shift.vz -= pa.vz * p.m / com.m / com.m * dmb;
+
+                com_shift.x += pb.x / com.m * pa.m;
+                com_shift.y += pb.y / com.m * pa.m;
+                com_shift.z += pb.z / com.m * pa.m;
+                com_shift.vx += pb.vx / com.m * pa.m;
+                com_shift.vy += pb.vy / com.m * pa.m;
+                com_shift.vz += pb.vz / com.m * pa.m;
+
+                com_shift.x += p.x / com.m * pv.m;
+                com_shift.y += p.y / com.m * pv.m;
+                com_shift.z += p.z / com.m * pv.m;
+                com_shift.vx += p.vx / com.m * pv.m;
+                com_shift.vy += p.vy / com.m * pv.m;
+                com_shift.vz += p.vz / com.m * pv.m;
+
+                com_shift.x -= p.x * pa.m / com.m / com.m * dmb;
+                com_shift.y -= p.y * pa.m / com.m / com.m * dmb;
+                com_shift.z -= p.z * pa.m / com.m / com.m * dmb;
+                com_shift.vx -= p.vx * pa.m / com.m / com.m * dmb;
+                com_shift.vy -= p.vy * pa.m / com.m / com.m * dmb;
+                com_shift.vz -= p.vz * pa.m / com.m / com.m * dmb;
+
+                com_shift.x -= pb.x * p.m / com.m / com.m * dma;
+                com_shift.y -= pb.y * p.m / com.m / com.m * dma;
+                com_shift.z -= pb.z * p.m / com.m / com.m * dma;
+                com_shift.vx -= pb.vx * p.m / com.m / com.m * dma;
+                com_shift.vy -= pb.vy * p.m / com.m / com.m * dma;
+                com_shift.vz -= pb.vz * p.m / com.m / com.m * dma;
+
+                com_shift.x -= p.x * pb.m / com.m / com.m * dma;
+                com_shift.y -= p.y * pb.m / com.m / com.m * dma;
+                com_shift.z -= p.z * pb.m / com.m / com.m * dma;
+                com_shift.vx -= p.vx * pb.m / com.m / com.m * dma;
+                com_shift.vy -= p.vy * pb.m / com.m / com.m * dma;
+                com_shift.vz -= p.vz * pb.m / com.m / com.m * dma;
+
+                com_shift.x += 2. * p.x * p.m / com.m / com.m / com.m * dma * dmb;
+                com_shift.y += 2. * p.y * p.m / com.m / com.m / com.m * dma * dmb;
+                com_shift.z += 2. * p.z * p.m / com.m / com.m / com.m * dma * dmb;
+                com_shift.vx += 2. * p.vx * p.m / com.m / com.m / com.m * dma * dmb;
+                com_shift.vy += 2. * p.vy * p.m / com.m / com.m / com.m * dma * dmb;
+                com_shift.vz += 2. * p.vz * p.m / com.m / com.m / com.m * dma * dmb;
+
+                com_shift.x -= p.x * p.m / com.m / com.m * ddm;
+                com_shift.y -= p.y * p.m / com.m / com.m * ddm;
+                com_shift.z -= p.z * p.m / com.m / com.m * ddm;
+                com_shift.vx -= p.vx * p.m / com.m / com.m * ddm;
+                com_shift.vy -= p.vy * p.m / com.m / com.m * ddm;
+                com_shift.vz -= p.vz * p.m / com.m / com.m * ddm;
+            }
+            for i in 0..N {
+                r.particles_var[i + index].x -= com_shift.x;
+                r.particles_var[i + index].y -= com_shift.y;
+                r.particles_var[i + index].z -= com_shift.z;
+                r.particles_var[i + index].vx -= com_shift.vx;
+                r.particles_var[i + index].vy -= com_shift.vy;
+                r.particles_var[i + index].vz -= com_shift.vz;
+            }
+        }
+    }
+
+    // PASS 2: first order.
+    for v in 0..r.var_config.len() {
+        let vc = r.var_config[v];
+        let index = vc.index;
+        if vc.testparticle >= 0 {
+            // Test particles do not affect the COM
         } else if vc.order == 1 {
-            let index = vc.index;
             let mut com_shift = reb_particle::default();
             let mut dm = 0.;
+            let mut dm_unreadable = false;
             for i in 0..N {
-                dm += r.particles_var[i + index].m;
+                // C: `dm += particles[i+index].m;` — the REAL particle
+                // array, not particles_var. That looks like an upstream
+                // slip (the neighbouring order-2 block sums particles_var),
+                // but it decides the value of the third com_shift term
+                // below, so bit-exactness requires reproducing it.
+                //
+                // The C indexes particles[i+index], which for index > 0
+                // reads past r->N: undefined behaviour that in practice
+                // returns whatever bytes follow the particle array. Safe
+                // Rust cannot reproduce garbage, so that case is reported
+                // rather than guessed (HARD RULE: report, never invent).
+                if i + index >= r.particles.len() {
+                    dm_unreadable = true;
+                    break;
+                }
+                dm += r.particles[i + index].m;
+            }
+            if dm_unreadable {
+                reb_simulation_error(
+                    r,
+                    "move_to_com: the C reads particles[i+index] past the end of the particle array for a 1st-order variational configuration with index > 0 (undefined behaviour upstream). rebound_rs cannot reproduce that read, so this configuration is left unshifted.",
+                );
+                continue;
             }
             for i in 0..N {
                 let p = r.particles[i];
@@ -310,7 +432,12 @@ pub fn reb_simulation_add_plummer(r: &mut reb_simulation, _N: usize, M: f64, R: 
             x5 = reb_random_uniform(Some(r), 0., 1.);
             q = reb_random_uniform(Some(r), 0., 1.);
             g = q * q * (1. - q * q).powf(7. / 2.);
-            if 0.1 * x5 <= g {
+            // C: `} while (0.1*x5 > g);` — negated as `!(a > b)` rather
+            // than `a <= b` so the exit condition keeps the C's NaN
+            // semantics (see the same note in integrator_whfast.rs).
+            // Here g is never NaN (q is drawn from [0,1], so 1-q*q >= 0),
+            // but the faithful form costs nothing.
+            if !(0.1 * x5 > g) {
                 break;
             }
         }

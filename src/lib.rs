@@ -28,6 +28,47 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 #![allow(non_upper_case_globals)]
+//
+// ---------------------------------------------------------------------
+// Clippy waivers. Every lint below fires on a pattern that deliberately
+// mirrors the C source. Applying clippy's suggestion would either change
+// floating-point evaluation order (which is not associative, so it would
+// change results) or destroy the line-for-line correspondence to the C
+// that makes this port reviewable. Each is justified in rebound_rust.md
+// section 17.
+//
+// READ THIS BEFORE "FIXING" ANYTHING BELOW: `neg_cmp_op_on_partial_ord`
+// is load-bearing. The port previously hung forever because a C loop
+// condition `while (a > b)` had been negated to `if a <= b { break }`.
+// Those are NOT equivalent when either side is NaN — which really
+// happens for near-rectilinear hyperbolic orbits in the WHFast Kepler
+// solver. The negation must stay written as `!(a > b)`. See
+// rebound_rust.md section 15.10, "Defect 1".
+// ---------------------------------------------------------------------
+#![allow(clippy::neg_cmp_op_on_partial_ord)] // MUST STAY: NaN semantics, see above
+#![allow(clippy::excessive_precision)] // constants carry the C's exact digits
+#![allow(clippy::identity_op)] // `m[0 + 4*0]` keeps C's stride arithmetic visible
+#![allow(clippy::erasing_op)] // same: `0 * n` inside C-mirroring index expressions
+#![allow(clippy::needless_range_loop)] // `for i in 0..N` mirrors `for(i=0;i<N;i++)`
+#![allow(clippy::assign_op_pattern)] // `a = a + b` mirrors the C statement
+#![allow(clippy::field_reassign_with_default)] // mirrors C's `struct X x = {0}; x.a = ..`
+#![allow(clippy::too_many_arguments)] // C signatures preserved verbatim (HARD RULE 3)
+#![allow(clippy::manual_range_contains)] // `x >= a || x < b` mirrors the C test
+#![allow(clippy::manual_memcpy)] // explicit copy loops mirror the C's
+#![allow(clippy::manual_swap)] // explicit 3-line swaps mirror the C's
+#![allow(clippy::manual_div_ceil)] // mirrors the C's `(a + b - 1) / b`
+#![allow(clippy::manual_is_multiple_of)] // mirrors the C's `x % n == 0`
+#![allow(clippy::misrefactored_assign_op)] // `a = a * b + c` shape is the C's
+#![allow(clippy::neg_multiply)] // `-1. * x` appears verbatim in the C
+#![allow(clippy::collapsible_if)] // nested `if`s mirror the C's nesting
+#![allow(clippy::collapsible_else_if)] // same
+#![allow(clippy::needless_late_init)] // C declares at top of block, assigns later
+#![allow(clippy::while_let_loop)] // mirrors the C's `for(;;)` with an inner break
+#![allow(clippy::unnecessary_cast)] // explicit casts mirror the C's conversions
+#![allow(clippy::ptr_arg)] // signature shape mirrors the C's array parameter
+#![allow(clippy::seek_from_current)] // mirrors the C's `fseek(f, n, SEEK_CUR)`
+#![allow(clippy::manual_clamp)] // mirrors the C's explicit min/max tests
+#![allow(clippy::drop_non_drop)] // explicit scope end mirrors the C's lifetime
 
 pub mod types;
 pub mod tools;

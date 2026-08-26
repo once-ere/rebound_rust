@@ -8,7 +8,9 @@
 /// Deviation: the C struct's `name` (interned `const char*`), `ap`
 /// (REBOUNDx attachment) and `sim` (parent back-pointer) cannot exist in
 /// safe owned Rust. `name` becomes an index into the simulation's
-/// `name_list`; `ap` has no equivalent (REBOUNDx is C-only); functions
+/// `name_list`; the C `ap` (REBOUNDx parameter list) has no in-struct
+/// equivalent because `reb_particle` is `Copy` — `reboundx_rs` keeps
+/// per-particle parameter lists indexed by particle number; functions
 /// that used the `sim` back-pointer take the simulation explicitly.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct reb_particle {
@@ -156,7 +158,7 @@ pub struct reb_treecell {
 pub const REB_TREECELL_NONE: usize = usize::MAX;
 
 /// Orbital elements (rebound.h `struct reb_orbit`).
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct reb_orbit {
     pub d: f64,
     pub v: f64,
@@ -391,4 +393,10 @@ pub struct reb_simulation {
     /// Web server state (server.c; None unless
     /// `reb_simulation_start_server` was called).
     pub server_data: Option<crate::server::reb_server_data>,
+
+    /// rebound.h `void* extras` — link to an additional (optional)
+    /// library, e.g. REBOUNDx. The C stores a raw `void*`; safe Rust
+    /// stores an owned `Any` box that the add-on library downcasts to
+    /// its own state type. `reboundx_rs` puts its `rebx_extras` here.
+    pub extras: Option<Box<dyn std::any::Any>>,
 }

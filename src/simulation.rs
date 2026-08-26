@@ -110,6 +110,7 @@ pub fn reb_simulation_create() -> reb_simulation {
         coefficient_of_restitution: None,
         collision_resolve: None,
         server_data: None,
+        extras: None,
     };
     reb_simulation_set_integrator(&mut r, "ias15");
     r

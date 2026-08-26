@@ -1,5 +1,38 @@
 //! libm_diff.rs — Rust twin of porttest/libm_diff.c. Same xorshift
 //! corpus, same functions, bit-pattern output for diffing.
+// Clippy waivers. A test/example is its own crate and does not inherit
+// the crate root's waivers, so they are repeated here. Same justification:
+// this code mirrors the C source's idioms, and applying clippy's
+// suggestions would obscure the correspondence that makes the port
+// reviewable. See rebound_rust.md section 17.
+#![allow(clippy::manual_clamp)] // mirrors the C's explicit min/max tests
+#![allow(clippy::neg_cmp_op_on_partial_ord)]
+#![allow(clippy::excessive_precision)]
+#![allow(clippy::identity_op)]
+#![allow(clippy::erasing_op)]
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::assign_op_pattern)]
+#![allow(clippy::field_reassign_with_default)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::manual_range_contains)]
+#![allow(clippy::manual_memcpy)]
+#![allow(clippy::manual_swap)]
+#![allow(clippy::manual_div_ceil)]
+#![allow(clippy::manual_is_multiple_of)]
+#![allow(clippy::misrefactored_assign_op)]
+#![allow(clippy::neg_multiply)]
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::collapsible_else_if)]
+#![allow(clippy::needless_late_init)]
+#![allow(clippy::while_let_loop)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::ptr_arg)]
+#![allow(clippy::seek_from_current)]
+#![allow(clippy::drop_non_drop)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::approx_constant)]
+#![allow(clippy::useless_vec)]
+#![allow(clippy::type_complexity)]
 use std::io::Write;
 
 fn bits(x: f64) -> u64 {
