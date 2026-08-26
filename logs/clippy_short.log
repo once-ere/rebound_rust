@@ -1,4 +1,4 @@
-    Checking rebound_rs v5.1.1 (C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust)
+    Checking rebound_rs v5.1.1 (C:\work\rebound_rust)
 src\tools.rs:105:11: error: manual `!Range::contains` implementation: help: use: `!(1.0e-12..1.).contains(&rsq)`
 src\tools.rs:128:14: error: the loop variable `i` is only used to index `particles`
 src\tools.rs:134:18: error: the loop variable `j` is only used to index `particles`

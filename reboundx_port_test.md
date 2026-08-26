@@ -7,6 +7,13 @@ our Rust translation of it, exactly how we ran the test, and what we found. It
 is written for someone who has never done this before. Every command is printed
 in full, so you never need to open another document.
 
+> **A note on `C:\work` in the commands below.** `C:\work` is a stand-in for
+> whatever folder you put this project in — it is not a real folder, and you do
+> not have to create one with that name. If your copy lives in
+> `C:\Users\Sam\astronomy`, then read every `C:\work\...` below as
+> `C:\Users\Sam\astronomy\...`. Only that leading part changes; the folder
+> names after it are real and must match.
+
 ---
 
 ## Table of contents
@@ -151,7 +158,7 @@ No Linux, no WSL2, no GCC, no Clang — everything native Windows.
 ### 6a. Get both sources
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0
+cd C:\work
 git clone https://github.com/hannorein/rebound.git rebound\rebound
 git clone https://github.com/dtamayo/reboundx.git reboundx
 ```
@@ -159,10 +166,10 @@ git clone https://github.com/dtamayo/reboundx.git reboundx
 ### 6b. Build C REBOUND, and make a static library from it
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\examples\shearing_sheet
+cd C:\work\rebound\rebound\examples\shearing_sheet
 cmd /c 'set PATH=C:\Program Files (x86)\GnuWin32\bin;%PATH% && "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && make'
 
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\src
+cd C:\work\rebound\rebound\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && lib /nologo /OUT:librebound_static.lib *.obj'
 ```
 
@@ -173,7 +180,7 @@ cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxilia
 ### 6c. Build C REBOUNDx
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx\src
+cd C:\work\reboundx\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /c /I"..\..\rebound\rebound\src" /I"." /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /DLIBREBOUNDX /Ox /fp:precise *.c'
 ```
 
@@ -205,7 +212,7 @@ cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxilia
 > `reboundx_rust/porttest/msvc_shim/`. Build them and add their object files:
 >
 > ```bash
-> cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest\msvc_shim
+> cd C:\work\reboundx_rust\porttest\msvc_shim
 > cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /c /I"..\..\..\rebound\rebound\src" /I"..\..\..\reboundx\src" /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /DLIBREBOUNDX /Ox /fp:precise gr_full.c interpolation.c'
 > copy gr_full.obj ..\..\..\reboundx\src\
 > copy interpolation.obj ..\..\..\reboundx\src\
@@ -217,7 +224,7 @@ cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxilia
 Now bundle all 33 object files into the library:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx\src
+cd C:\work\reboundx\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && lib /nologo /OUT:libreboundx.lib *.obj'
 ```
 
@@ -234,7 +241,7 @@ with exactly three changes, listed at the top of each file:
 **The physics setup is byte-for-byte the stock example.**
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 copy ..\..\reboundx\src\libreboundx.lib .
 copy ..\..\rebound\rebound\src\librebound_static.lib .
 
@@ -252,7 +259,7 @@ cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxilia
 ## 7. Step 2 — Build the Rust version
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo build --release
 cargo build --release --examples
 ```
@@ -267,7 +274,7 @@ rejects any use of Rust's escape hatch for unchecked operations.
 Each program takes the simulation end time as its argument.
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 
 .\tides_spin_pseudo_c.exe 62.83185307179586
 ..\target\release\examples\tides_spin_pseudo.exe 62.83185307179586

@@ -1,4 +1,4 @@
-    Checking rebound_rs v5.1.1 (C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust)
+    Checking rebound_rs v5.1.1 (C:\work\rebound_rust)
 error: manual `!Range::contains` implementation
    --> src\tools.rs:105:11
     |

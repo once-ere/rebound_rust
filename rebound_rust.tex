@@ -142,6 +142,10 @@ To test it, both programs print every number as its raw bits in \textbf{hexadeci
 
 You need a Windows PC (64-bit Intel or AMD) and two free downloads.
 
+\begin{quote}
+\#\#\# One thing to know before you read any command in this document  Every command below says \textbf{\texttt{C:\textbackslash{}work}}. That is a stand-in for \emph{whatever folder you put this project in} --- it is not a real folder on your machine and not one you have to create with that exact name.  So if you cloned everything into \texttt{C:\textbackslash{}Users\textbackslash{}Sam\textbackslash{}Documents\textbackslash{}astronomy}, then wherever this document says  ``\texttt{ cd C:\textbackslash{}work\textbackslash{}rebound\_rust }`\texttt{  you type  }`\texttt{ cd C:\textbackslash{}Users\textbackslash{}Sam\textbackslash{}Documents\textbackslash{}astronomy\textbackslash{}rebound\_rust }`\texttt{  Only the front part changes. Everything after }C:\textbackslash{}work\textbackslash{}\texttt{ - the folder names }rebound\_rust\texttt{, }reboundx\_rust\texttt{, }rebound\textbackslash{}rebound\textbackslash{}src\texttt{, }porttest\texttt{ and so on - is real and must match exactly, because that is the layout the code expects.  If you would rather not retype it every time, tell the terminal once:  }`\texttt{powershell \$work = "C:\textbackslash{}Users\textbackslash{}Sam\textbackslash{}Documents\textbackslash{}astronomy" cd "\$work\textbackslash{}rebound\_rust" }``
+\end{quote}
+
 \subsection{4a. Rust}
 
 Go to <https://rustup.rs> and download \texttt{rustup-init.exe}. Run it and accept the defaults (this installs the MSVC toolchain, which is what we want).
@@ -175,7 +179,7 @@ Let us simulate a star with one planet.
 \textbf{Step 1 --- make a new project.}
 
 \begin{lstlisting}
-cd C:\Users\nsh\Desktop
+cd C:\Users\<you>\Desktop
 cargo new my_first_simulation
 cd my_first_simulation
 \end{lstlisting}
@@ -193,7 +197,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rebound_rs = { path = "C:/Users/nsh/Developer/github/rustSolveIt_Win11_SUNDIALS_7_8_0/rebound_rust" }
+rebound_rs = { path = "C:/work/rebound_rust" }
 \end{lstlisting}
 
 (Use forward slashes \texttt{/} even on Windows --- that is what this file expects.)
@@ -438,8 +442,8 @@ Add the second dependency to \texttt{Cargo.toml}:
 
 \begin{lstlisting}
 [dependencies]
-rebound_rs  = { path = "C:/Users/nsh/Developer/github/rustSolveIt_Win11_SUNDIALS_7_8_0/rebound_rust" }
-reboundx_rs = { path = "C:/Users/nsh/Developer/github/rustSolveIt_Win11_SUNDIALS_7_8_0/reboundx_rust" }
+rebound_rs  = { path = "C:/work/rebound_rust" }
+reboundx_rs = { path = "C:/work/reboundx_rust" }
 \end{lstlisting}
 
 The pattern is always the same:
@@ -543,13 +547,13 @@ Other & \texttt{stochastic\_forces}, \texttt{modify\_mass}, \texttt{track\_min\_
 Each effect's required parameters are documented as Rust doc comments at the top of its module, carried over from the C source. To read them:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo doc --open
 \end{lstlisting}
 
 \section{8. Every build command, in one place}
 
-From \texttt{C:\textbackslash{}Users\textbackslash{}nsh\textbackslash{}Developer\textbackslash{}github\textbackslash{}rustSolveIt\_Win11\_SUNDIALS\_7\_8\_0\textbackslash{}rebound\_rust}:
+From \texttt{C:\textbackslash{}work\textbackslash{}rebound\_rust}:
 
 \begin{lstlisting}
 cargo build --release
@@ -569,7 +573,7 @@ cargo build --release --example server_test
 cargo build --release --example addfmt_test
 \end{lstlisting}
 
-From \texttt{C:\textbackslash{}Users\textbackslash{}nsh\textbackslash{}Developer\textbackslash{}github\textbackslash{}rustSolveIt\_Win11\_SUNDIALS\_7\_8\_0\textbackslash{}reboundx\_rust}:
+From \texttt{C:\textbackslash{}work\textbackslash{}reboundx\_rust}:
 
 \begin{lstlisting}
 cargo build --release
@@ -614,7 +618,7 @@ Operating system & Windows 11 Pro for Workstations 10.0.26200, x86-64 \\
 C compiler & MSVC \texttt{cl} 19.51.36256 for x64 (Visual Studio 2026 Build Tools) \\
 Compiler environment script & \texttt{C:\textbackslash{}Program Files (x86)\textbackslash{}Microsoft Visual Studio\textbackslash{}18\textbackslash{}BuildTools\textbackslash{}VC\textbackslash{}Auxiliary\textbackslash{}Build\textbackslash{}vcvars64.bat} \\
 make & GnuWin32 Make 3.81 \\
-vcpkg & \texttt{C:\textbackslash{}Users\textbackslash{}nsh\textbackslash{}vcpkg\textbackslash{}vcpkg.exe} \\
+vcpkg & \texttt{C:\textbackslash{}Users\textbackslash{}<you>\textbackslash{}vcpkg\textbackslash{}vcpkg.exe} \\
 Rust & \texttt{rustc 1.91.1 (ed61e7d7e 2025-11-07)}, \texttt{cargo 1.91.1}, target \texttt{x86\_64-pc-windows-msvc} \\
 REBOUND source & github.com/hannorein/rebound, \textbf{5.1.1}, commit \texttt{dad5f97806ecbb408dcaff728851c64e67f9f6eb} \\
 REBOUNDx source & github.com/dtamayo/reboundx, \textbf{5.1.0} \\
@@ -626,10 +630,10 @@ REBOUNDx source & github.com/dtamayo/reboundx, \textbf{5.1.0} \\
 REBOUND's native 3-D viewer uses a library called GLFW on Linux and macOS. It was installed for future use:
 
 \begin{lstlisting}
-C:\Users\nsh\vcpkg\vcpkg.exe install glfw3:x64-windows
+C:\Users\<you>\vcpkg\vcpkg.exe install glfw3:x64-windows
 \end{lstlisting}
 
-This gave glfw3 \textbf{3.5.1} (\texttt{C:\textbackslash{}Users\textbackslash{}nsh\textbackslash{}vcpkg\textbackslash{}installed\textbackslash{}x64-windows\textbackslash{}lib\textbackslash{}glfw3dll.lib}). However, \textbf{REBOUND's own build system forces OpenGL off on Windows} (\texttt{src/Makefile.defs} line 21 prints "OpenGL not supported on Windows. Setting OPENGL=0"), so the C reference does not link GLFW, and visualisation is done through the built-in web server instead --- which \emph{is} ported. The vcpkg install is staged for any future work on the OpenGL path.
+This gave glfw3 \textbf{3.5.1} (\texttt{C:\textbackslash{}Users\textbackslash{}<you>\textbackslash{}vcpkg\textbackslash{}installed\textbackslash{}x64-windows\textbackslash{}lib\textbackslash{}glfw3dll.lib}). However, \textbf{REBOUND's own build system forces OpenGL off on Windows} (\texttt{src/Makefile.defs} line 21 prints "OpenGL not supported on Windows. Setting OPENGL=0"), so the C reference does not link GLFW, and visualisation is done through the built-in web server instead --- which \emph{is} ported. The vcpkg install is staged for any future work on the OpenGL path.
 
 \section{10. Building the C originals (the reference)}
 
@@ -638,10 +642,10 @@ To prove our Rust gives the same answers, we first need the originals to compare
 \subsection{10a. REBOUND}
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0
+cd C:\work
 git clone https://github.com/hannorein/rebound.git rebound\rebound
 
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\examples\shearing_sheet
+cd C:\work\rebound\rebound\examples\shearing_sheet
 cmd /c 'set PATH=C:\Program Files (x86)\GnuWin32\bin;%PATH% && "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && make'
 \end{lstlisting}
 
@@ -660,7 +664,7 @@ cl -c /DBUILDINGLIBREBOUND /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTD
 For linking test harnesses we also need a \emph{static} library containing the internal (non-exported) functions:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\src
+cd C:\work\rebound\rebound\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && lib /nologo /OUT:librebound_static.lib *.obj'
 \end{lstlisting}
 
@@ -669,7 +673,7 @@ One detail worth recording: on Windows, REBOUND vendors glibc's \texttt{rand\_r}
 \subsection{10b. REBOUNDx}
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx\src
+cd C:\work\reboundx\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /c /I"..\..\rebound\rebound\src" /I"." /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /DLIBREBOUNDX /Ox /fp:precise *.c'
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && lib /nologo /OUT:libreboundx.lib *.obj'
 \end{lstlisting}
@@ -695,7 +699,7 @@ double* u = malloc((size_t)n*sizeof(double));
 with matching \texttt{free()} calls so the lifetime matches the original. Same element type, same indices, same values, same order --- the numbers are untouched. The patched copies live in \texttt{reboundx\_rust/porttest/msvc\_shim/} so that \textbf{the upstream source is never modified}, and their object files are then included in the library:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest\msvc_shim
+cd C:\work\reboundx_rust\porttest\msvc_shim
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /c /I"..\..\..\rebound\rebound\src" /I"..\..\..\reboundx\src" /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /DLIBREBOUNDX /Ox /fp:precise gr_full.c interpolation.c'
 \end{lstlisting}
 
@@ -907,12 +911,12 @@ The test suites found three genuine translation defects, which are written up ho
 To run both suites yourself:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo test --release
 \end{lstlisting}
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo test --release
 \end{lstlisting}
 
@@ -921,7 +925,7 @@ cargo test --release
 Before anything else we established what the two languages' maths libraries do, using a differential harness of 200,000 samples per function:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example libm_diff
 cd porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /Ox /fp:precise libm_diff.c /Fe:libm_diff.exe'
@@ -940,14 +944,14 @@ A fixed three-body problem (star of mass 1; planet of mass 10\textasciicircum{}-
 Build the C harness once:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /I"..\..\rebound\rebound\src" /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /Ox /fp:precise integrators_test.c librebound.lib /Fe:integrators_test.exe'
 \end{lstlisting}
 
 To check a single configuration, give the harness a configuration name, a leapfrog order (ignored by the others) and a step count, then compare:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\integrators_test.exe whfast 2 500
 ..\target\release\examples\integrators_test.exe whfast 2 500
 Compare-Object (Get-Content state_c_final.txt) (Get-Content state_rust_final.txt)
@@ -958,7 +962,7 @@ Compare-Object (Get-Content state_c_final.txt) (Get-Content state_rust_final.txt
 To check \textbf{all 63 in one go}, run the sweep script that ships in \texttt{porttest\textbackslash{}}. It knows every configuration name, runs each one in both languages, compares the dumps and prints a tally:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 powershell -ExecutionPolicy Bypass -File .\run_integrator_matrix.ps1 500
 \end{lstlisting}
 
@@ -974,7 +978,7 @@ ALL CONFIGURATIONS BIT-IDENTICAL
 One thing to know before you run it: \textbf{every harness in \texttt{porttest\textbackslash{}} writes its results to the same two filenames}, \texttt{state\_c\_final.txt} and \texttt{state\_rust\_final.txt}. That is deliberate --- it keeps the comparison command identical for every test --- but it means each run overwrites the last one's dumps, and the sweep script above consumes them. If you run the sweep and then try to check the shearing sheet, you will find the shearing sheet's files gone. Just re-run that pair to recreate them:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\rebound_test.exe 400
 ..\target\release\examples\shearing_sheet_test.exe 400
 \end{lstlisting}
@@ -1010,7 +1014,7 @@ This matrix was re-run in full after every change to the crate, including after 
 The stock Saturn's-rings example: SEI integrator, octree gravity, tree collision search, shear-periodic boundary, hard-sphere collisions with the Bridges bounce law, and \texttt{rand\_r} initial conditions. Seed 42, \textbf{1,482 particles}, 400 steps, \textbf{102,533 collisions}.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\rebound_test.exe 400
 ..\target\release\examples\shearing_sheet_test.exe 400
 \end{lstlisting}
@@ -1049,7 +1053,7 @@ A synthetic three-frequency signal (0.30, 0.55, 0.11 radians per sample), 256 sa
 The strongest interoperability test. One implementation runs 3 \(\times\) 100 steps, saving a snapshot after each 100. The \emph{other} implementation loads snapshot 1 (the 200-step state), continues for 100 more steps, and must land on the writer's 300-step state \textbf{bit-exactly}.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\archive_test.exe whfast-usafe write
 ..\target\release\examples\archive_test.exe whfast-usafe continue
 ..\target\release\examples\archive_test.exe whfast-usafe write
@@ -1063,7 +1067,7 @@ cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\p
 The Rust example pauses a 100-step simulation and serves it over HTTP; the blob is then loaded by the C build.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 # in one terminal:
 ..\target\release\examples\server_test.exe
 # in another:
@@ -1083,7 +1087,7 @@ Built-in "solar system" dataset plus particles created from orbital elements, fr
 Three of REBOUNDx's own shipped examples were run in both languages and compared bit for bit. Together they exercise the tidal and spin forces, the spin differential-equation machinery, general-relativistic precession, migration forces, both a fixed-step and an \textbf{adaptive} integrator, the rotation into the invariable plane, and changing a parameter mid-run.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 .\tides_spin_pseudo_c.exe 62.83185307179586     2>$null
 ..\target\release\examples\tides_spin_pseudo.exe 62.83185307179586
 \end{lstlisting}
@@ -1127,7 +1131,7 @@ REBOUNDx can save a whole configuration --- every force, every operator, every o
 So both libraries were made to build the \emph{same} configuration and write it out: two forces (\texttt{gr\_potential}, \texttt{central\_force}), two operators (\texttt{modify\_mass}, \texttt{drift}) across three operator steps with pre- and post-timestep timings, and parameters of every supported type --- \texttt{double}, \texttt{int} (including a negative one), \texttt{uint32}, \texttt{vec3d}, \texttt{string}, and a pointer to a force.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 ..\target\release\examples\rebx_binary_roundtrip.exe          # Rust writes rebx_binary_roundtrip.bin
 .\rebx_binary_roundtrip_c.exe rebx_c_reference.bin            # C writes rebx_c_reference.bin
 \end{lstlisting}
@@ -1283,7 +1287,7 @@ We then evaluated \texttt{pow} with exactly the argument shapes that step-size c
 Reproduce that second measurement with:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example bs_pow_diff
 cd porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /Ox /fp:precise bs_pow_diff.c /Fe:bs_pow_diff.exe'
@@ -1337,13 +1341,13 @@ Clippy suggests rewriting \texttt{!(a > b)} as \texttt{a <= b}. \textbf{Those ar
 The practical consequence of doing it this way:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release          # zero warnings
 cargo clippy --release --all-targets   # zero warnings
 \end{lstlisting}
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo build --release          # zero warnings
 cargo clippy --release --all-targets   # zero warnings
 \end{lstlisting}
@@ -1367,7 +1371,7 @@ In order, from a fresh machine:
 
 \begin{lstlisting}
 # 1. Get the source
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0
+cd C:\work
 git clone https://github.com/hannorein/rebound.git rebound\rebound
 git clone https://github.com/dtamayo/reboundx.git reboundx
 
@@ -1405,7 +1409,7 @@ cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxilia
 Build the eleven REBOUND harnesses. They link against \texttt{librebound.lib}, which is the small "import library" that goes with \texttt{librebound.dll}; copy both of those from \texttt{rebound\textbackslash{}rebound\textbackslash{}src\textbackslash{}} into \texttt{porttest\textbackslash{}} first, because the DLL must sit beside the finished \texttt{.exe} files for them to start:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 copy ..\..\rebound\rebound\src\librebound.lib .
 copy ..\..\rebound\rebound\src\librebound.dll .
 for %f in (addfmt_test archive_test bs_pow_diff derivatives_test frequency_test integrators_test kepler_rectilinear_c libm_diff movetocom_var_c movetocom_var_test problem_test) do cl /nologo /Ox /fp:precise /I..\..\rebound\rebound\src %f.c librebound.lib /Fe:%f.exe
@@ -1416,12 +1420,12 @@ That prints a page of compiler chatter and produces eleven \texttt{.exe} files. 
 The REBOUNDx harnesses need two extra object files. REBOUNDx's \texttt{gr\_full.c} and \texttt{interpolation.c} use a C99 feature called a "variable-length array" that Microsoft's compiler does not support, so \texttt{porttest\textbackslash{}msvc\_shim\textbackslash{}} holds copies that allocate the same arrays on the heap instead. The arithmetic is unchanged --- only where the memory comes from. Build the shims, then the harnesses:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest\msvc_shim
+cd C:\work\reboundx_rust\porttest\msvc_shim
 cl /nologo /c /Ox /fp:precise /I..\..\..\rebound\rebound\src /I..\..\..\reboundx\src /D_CRT_SECURE_NO_WARNINGS /DLIBREBOUNDX gr_full.c interpolation.c
 \end{lstlisting}
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 for %f in (tides_spin_pseudo_c tides_spin_kozai_c tides_spin_migration_c rebx_binary_roundtrip_c rebx_binary_read_c) do cl /nologo /Ox /fp:precise /I..\..\rebound\rebound\src /I..\..\reboundx\src %f.c librebound_static.lib libreboundx.lib msvc_shim\gr_full.obj msvc_shim\interpolation.obj /Fe:%f.exe
 \end{lstlisting}
 
@@ -1432,7 +1436,7 @@ The linker prints \texttt{LNK4217} and \texttt{LNK4286} warnings about symbols b
 Each harness has a Rust twin with the same name under \texttt{examples\textbackslash{}}. Run both, then compare. The comparison always works the same way: \texttt{Compare-Object} printing nothing means the files are identical.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\integrators_test.exe
 ..\target\release\examples\integrators_test.exe
 Compare-Object (Get-Content ref_c_ias15.txt) (Get-Content ref_rust_ias15.txt)
@@ -1441,7 +1445,7 @@ Compare-Object (Get-Content ref_c_ias15.txt) (Get-Content ref_rust_ias15.txt)
 The shearing sheet is the largest single check. Note that the Rust example to run is \texttt{shearing\_sheet\_test}, not \texttt{shearing\_sheet}: the stock REBOUND example integrates forever by design, so the \texttt{\_test} variant is the same simulation with a stopping time added.
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 ..\target\release\examples\shearing_sheet_test.exe
 Get-FileHash state_c_final.txt, state_rust_final.txt -Algorithm SHA256 | Format-List Path, Hash
 \end{lstlisting}
@@ -1451,7 +1455,7 @@ Both hashes must read \texttt{75BDAAB7109F125192F56AEB0CCDCAC554AF88A165FE11075E
 The three REBOUNDx tidal-spin tests take a stopping time as their argument. Send the C program's error stream to \texttt{\$null}, because REBOUNDx prints a warning on \emph{every} timestep and that alone produces over a gigabyte of text:
 
 \begin{lstlisting}
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 foreach ($t in @(@('pseudo','62.83185307179586'),@('kozai','1000.0'),@('migration','62.83185307179586'))) {
     $n = $t[0]
     & ".\tides_spin_${n}_c.exe" $t[1] 2>$null | Out-Null

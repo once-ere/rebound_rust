@@ -1,4 +1,4 @@
-   Compiling rebound_rs v5.1.1 (C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust)
+   Compiling rebound_rs v5.1.1 (C:\work\rebound_rust)
 warning: variable `G` should have a snake case name
   --> examples\derivatives_test.rs:81:9
    |

@@ -296,5 +296,5 @@ test kepler_solver_handles_near_rectilinear_hyperbolic_motion has been running f
 error: test failed, to rerun pass `--test integrators_symplectic`
 
 Caused by:
-  process didn't exit successfully: `C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\target\release\deps\integrators_symplectic-53171f18735fa44f.exe` (exit code: 0xffffffff)
+  process didn't exit successfully: `C:\work\rebound_rust\target\release\deps\integrators_symplectic-53171f18735fa44f.exe` (exit code: 0xffffffff)
 note: test exited abnormally; to see the full output pass --no-capture to the harness.

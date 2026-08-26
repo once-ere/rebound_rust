@@ -147,6 +147,37 @@ then compare the files character by character.
 
 You need a Windows PC (64-bit Intel or AMD) and two free downloads.
 
+> ### One thing to know before you read any command in this document
+>
+> Every command below says **`C:\work`**. That is a stand-in for *whatever
+> folder you put this project in* — it is not a real folder on your machine
+> and not one you have to create with that exact name.
+>
+> So if you cloned everything into `C:\Users\Sam\Documents\astronomy`, then
+> wherever this document says
+>
+> ```
+> cd C:\work\rebound_rust
+> ```
+>
+> you type
+>
+> ```
+> cd C:\Users\Sam\Documents\astronomy\rebound_rust
+> ```
+>
+> Only the front part changes. Everything after `C:\work\` — the folder
+> names `rebound_rust`, `reboundx_rust`, `rebound\rebound\src`, `porttest`
+> and so on — is real and must match exactly, because that is the layout
+> the code expects.
+>
+> If you would rather not retype it every time, tell the terminal once:
+>
+> ```powershell
+> $work = "C:\Users\Sam\Documents\astronomy"
+> cd "$work\rebound_rust"
+> ```
+
 ### 4a. Rust
 
 Go to <https://rustup.rs> and download `rustup-init.exe`. Run it and accept the
@@ -184,7 +215,7 @@ Let us simulate a star with one planet.
 **Step 1 — make a new project.**
 
 ```bash
-cd C:\Users\nsh\Desktop
+cd C:\Users\<you>\Desktop
 cargo new my_first_simulation
 cd my_first_simulation
 ```
@@ -203,7 +234,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rebound_rs = { path = "C:/Users/nsh/Developer/github/rustSolveIt_Win11_SUNDIALS_7_8_0/rebound_rust" }
+rebound_rs = { path = "C:/work/rebound_rust" }
 ```
 
 (Use forward slashes `/` even on Windows — that is what this file expects.)
@@ -443,8 +474,8 @@ Add the second dependency to `Cargo.toml`:
 
 ```toml
 [dependencies]
-rebound_rs  = { path = "C:/Users/nsh/Developer/github/rustSolveIt_Win11_SUNDIALS_7_8_0/rebound_rust" }
-reboundx_rs = { path = "C:/Users/nsh/Developer/github/rustSolveIt_Win11_SUNDIALS_7_8_0/reboundx_rust" }
+rebound_rs  = { path = "C:/work/rebound_rust" }
+reboundx_rs = { path = "C:/work/reboundx_rust" }
 ```
 
 The pattern is always the same:
@@ -533,13 +564,13 @@ Each effect's required parameters are documented as Rust doc comments at the
 top of its module, carried over from the C source. To read them:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo doc --open
 ```
 
 ## 8. Every build command, in one place
 
-From `C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust`:
+From `C:\work\rebound_rust`:
 
 ```bash
 cargo build --release
@@ -559,7 +590,7 @@ cargo build --release --example server_test
 cargo build --release --example addfmt_test
 ```
 
-From `C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust`:
+From `C:\work\reboundx_rust`:
 
 ```bash
 cargo build --release
@@ -597,7 +628,7 @@ no Clang involved at any point.
 | C compiler | MSVC `cl` 19.51.36256 for x64 (Visual Studio 2026 Build Tools) |
 | Compiler environment script | `C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat` |
 | make | GnuWin32 Make 3.81 |
-| vcpkg | `C:\Users\nsh\vcpkg\vcpkg.exe` |
+| vcpkg | `C:\Users\<you>\vcpkg\vcpkg.exe` |
 | Rust | `rustc 1.91.1 (ed61e7d7e 2025-11-07)`, `cargo 1.91.1`, target `x86_64-pc-windows-msvc` |
 | REBOUND source | github.com/hannorein/rebound, **5.1.1**, commit `dad5f97806ecbb408dcaff728851c64e67f9f6eb` |
 | REBOUNDx source | github.com/dtamayo/reboundx, **5.1.0** |
@@ -608,10 +639,10 @@ REBOUND's native 3-D viewer uses a library called GLFW on Linux and macOS. It
 was installed for future use:
 
 ```bash
-C:\Users\nsh\vcpkg\vcpkg.exe install glfw3:x64-windows
+C:\Users\<you>\vcpkg\vcpkg.exe install glfw3:x64-windows
 ```
 
-This gave glfw3 **3.5.1** (`C:\Users\nsh\vcpkg\installed\x64-windows\lib\glfw3dll.lib`).
+This gave glfw3 **3.5.1** (`C:\Users\<you>\vcpkg\installed\x64-windows\lib\glfw3dll.lib`).
 However, **REBOUND's own build system forces OpenGL off on Windows**
 (`src/Makefile.defs` line 21 prints "OpenGL not supported on Windows. Setting
 OPENGL=0"), so the C reference does not link GLFW, and visualisation is done
@@ -626,10 +657,10 @@ compare against.
 ### 10a. REBOUND
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0
+cd C:\work
 git clone https://github.com/hannorein/rebound.git rebound\rebound
 
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\examples\shearing_sheet
+cd C:\work\rebound\rebound\examples\shearing_sheet
 cmd /c 'set PATH=C:\Program Files (x86)\GnuWin32\bin;%PATH% && "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && make'
 ```
 
@@ -655,7 +686,7 @@ For linking test harnesses we also need a *static* library containing the
 internal (non-exported) functions:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\src
+cd C:\work\rebound\rebound\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && lib /nologo /OUT:librebound_static.lib *.obj'
 ```
 
@@ -668,7 +699,7 @@ reproduces them exactly.
 ### 10b. REBOUNDx
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx\src
+cd C:\work\reboundx\src
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /c /I"..\..\rebound\rebound\src" /I"." /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /DLIBREBOUNDX /Ox /fp:precise *.c'
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && lib /nologo /OUT:libreboundx.lib *.obj'
 ```
@@ -701,7 +732,7 @@ untouched. The patched copies live in
 modified**, and their object files are then included in the library:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest\msvc_shim
+cd C:\work\reboundx_rust\porttest\msvc_shim
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /c /I"..\..\..\rebound\rebound\src" /I"..\..\..\reboundx\src" /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /DLIBREBOUNDX /Ox /fp:precise gr_full.c interpolation.c'
 ```
 
@@ -944,12 +975,12 @@ honestly in §15.10 rather than quietly fixed.
 To run both suites yourself:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo test --release
 ```
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo test --release
 ```
 
@@ -959,7 +990,7 @@ Before anything else we established what the two languages' maths libraries do,
 using a differential harness of 200,000 samples per function:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example libm_diff
 cd porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /Ox /fp:precise libm_diff.c /Fe:libm_diff.exe'
@@ -982,7 +1013,7 @@ G = 1, dt = 0.01, 500 steps, final state dumped as raw bits.
 Build the C harness once:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /I"..\..\rebound\rebound\src" /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /Ox /fp:precise integrators_test.c librebound.lib /Fe:integrators_test.exe'
 ```
 
@@ -990,7 +1021,7 @@ To check a single configuration, give the harness a configuration name, a
 leapfrog order (ignored by the others) and a step count, then compare:
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\integrators_test.exe whfast 2 500
 ..\target\release\examples\integrators_test.exe whfast 2 500
 Compare-Object (Get-Content state_c_final.txt) (Get-Content state_rust_final.txt)
@@ -1003,7 +1034,7 @@ It knows every configuration name, runs each one in both languages, compares
 the dumps and prints a tally:
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 powershell -ExecutionPolicy Bypass -File .\run_integrator_matrix.ps1 500
 ```
 
@@ -1025,7 +1056,7 @@ sweep and then try to check the shearing sheet, you will find the shearing
 sheet's files gone. Just re-run that pair to recreate them:
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\rebound_test.exe 400
 ..\target\release\examples\shearing_sheet_test.exe 400
 ```
@@ -1057,7 +1088,7 @@ Bridges bounce law, and `rand_r` initial conditions. Seed 42, **1,482
 particles**, 400 steps, **102,533 collisions**.
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\rebound_test.exe 400
 ..\target\release\examples\shearing_sheet_test.exe 400
 ```
@@ -1119,7 +1150,7 @@ saving a snapshot after each 100. The *other* implementation loads snapshot 1
 writer's 300-step state **bit-exactly**.
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\archive_test.exe whfast-usafe write
 ..\target\release\examples\archive_test.exe whfast-usafe continue
 ..\target\release\examples\archive_test.exe whfast-usafe write
@@ -1138,7 +1169,7 @@ The Rust example pauses a 100-step simulation and serves it over HTTP; the
 blob is then loaded by the C build.
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 # in one terminal:
 ..\target\release\examples\server_test.exe
 # in another:
@@ -1165,7 +1196,7 @@ forces, both a fixed-step and an **adaptive** integrator, the rotation into the
 invariable plane, and changing a parameter mid-run.
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 .\tides_spin_pseudo_c.exe 62.83185307179586     2>$null
 ..\target\release\examples\tides_spin_pseudo.exe 62.83185307179586
 ```
@@ -1215,7 +1246,7 @@ parameters of every supported type — `double`, `int` (including a negative one
 `uint32`, `vec3d`, `string`, and a pointer to a force.
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 ..\target\release\examples\rebx_binary_roundtrip.exe          # Rust writes rebx_binary_roundtrip.bin
 .\rebx_binary_roundtrip_c.exe rebx_c_reference.bin            # C writes rebx_c_reference.bin
 ```
@@ -1416,7 +1447,7 @@ places, and both times the diagnosis was conclusive:
 Reproduce that second measurement with:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example bs_pow_diff
 cd porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /Ox /fp:precise bs_pow_diff.c /Fe:bs_pow_diff.exe'
@@ -1482,13 +1513,13 @@ section 15.10, and the comment in `lib.rs` says so at the point of the waiver.
 The practical consequence of doing it this way:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release          # zero warnings
 cargo clippy --release --all-targets   # zero warnings
 ```
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust
+cd C:\work\reboundx_rust
 cargo build --release          # zero warnings
 cargo clippy --release --all-targets   # zero warnings
 ```
@@ -1524,7 +1555,7 @@ In order, from a fresh machine:
 
 ```bash
 # 1. Get the source
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0
+cd C:\work
 git clone https://github.com/hannorein/rebound.git rebound\rebound
 git clone https://github.com/dtamayo/reboundx.git reboundx
 
@@ -1568,7 +1599,7 @@ from `rebound\rebound\src\` into `porttest\` first, because the DLL must sit
 beside the finished `.exe` files for them to start:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 copy ..\..\rebound\rebound\src\librebound.lib .
 copy ..\..\rebound\rebound\src\librebound.dll .
 for %f in (addfmt_test archive_test bs_pow_diff derivatives_test frequency_test integrators_test kepler_rectilinear_c libm_diff movetocom_var_c movetocom_var_test problem_test) do cl /nologo /Ox /fp:precise /I..\..\rebound\rebound\src %f.c librebound.lib /Fe:%f.exe
@@ -1586,12 +1617,12 @@ that allocate the same arrays on the heap instead. The arithmetic is unchanged �
 only where the memory comes from. Build the shims, then the harnesses:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest\msvc_shim
+cd C:\work\reboundx_rust\porttest\msvc_shim
 cl /nologo /c /Ox /fp:precise /I..\..\..\rebound\rebound\src /I..\..\..\reboundx\src /D_CRT_SECURE_NO_WARNINGS /DLIBREBOUNDX gr_full.c interpolation.c
 ```
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 for %f in (tides_spin_pseudo_c tides_spin_kozai_c tides_spin_migration_c rebx_binary_roundtrip_c rebx_binary_read_c) do cl /nologo /Ox /fp:precise /I..\..\rebound\rebound\src /I..\..\reboundx\src %f.c librebound_static.lib libreboundx.lib msvc_shim\gr_full.obj msvc_shim\interpolation.obj /Fe:%f.exe
 ```
 
@@ -1607,7 +1638,7 @@ compare. The comparison always works the same way: `Compare-Object` printing
 nothing means the files are identical.
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\integrators_test.exe
 ..\target\release\examples\integrators_test.exe
 Compare-Object (Get-Content ref_c_ias15.txt) (Get-Content ref_rust_ias15.txt)
@@ -1619,7 +1650,7 @@ integrates forever by design, so the `_test` variant is the same simulation with
 a stopping time added.
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 ..\target\release\examples\shearing_sheet_test.exe
 Get-FileHash state_c_final.txt, state_rust_final.txt -Algorithm SHA256 | Format-List Path, Hash
 ```
@@ -1632,7 +1663,7 @@ the C program's error stream to `$null`, because REBOUNDx prints a warning on
 *every* timestep and that alone produces over a gigabyte of text:
 
 ```powershell
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\reboundx_rust\porttest
+cd C:\work\reboundx_rust\porttest
 foreach ($t in @(@('pseudo','62.83185307179586'),@('kozai','1000.0'),@('migration','62.83185307179586'))) {
     $n = $t[0]
     & ".\tides_spin_${n}_c.exe" $t[1] 2>$null | Out-Null

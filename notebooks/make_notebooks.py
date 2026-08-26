@@ -10,7 +10,12 @@ Part of the rebound_rs / reboundx_rs port. GPL-3.0-or-later.
 import json
 import os
 
-ROOT = r"C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0"
+# Derived, never hard-coded: this file lives at
+# <workspace>/rebound_rust/notebooks/make_notebooks.py, so two levels
+# up is the workspace holding both crates. Hard-coding an absolute
+# path here would bake one machine's layout into every notebook.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(_HERE))
 REBOUND = os.path.join(ROOT, "rebound_rust")
 REBOUNDX = os.path.join(ROOT, "reboundx_rust")
 OUT = os.path.join(REBOUND, "notebooks")
@@ -369,6 +374,7 @@ plt.show()
 
 def build(name, spec):
     crate_dir = REBOUND if spec["crate"] == "rebound" else REBOUNDX
+    crate_name = "rebound_rust" if spec["crate"] == "rebound" else "reboundx_rust"
     work = os.path.join(crate_dir, "porttest")
     # Which example actually gets built and run. `runs` overrides the
     # notebook's own name for the one case where the example named in the
@@ -382,15 +388,23 @@ def build(name, spec):
            f"runs it, and shows the result. Everything it does can also be done "
            f"by hand in a terminal:\n\n"
            f"```\n"
-           f"cd {crate_dir}\n"
+           f"cd {crate_name}\n"
            f"cargo build --release --example {runs}\n"
            f"cd {work}\n"
            f"{cmdline}\n"
            f"```"),
         code(
             f'import os, subprocess\n'
-            f'CRATE   = r"{crate_dir}"\n'
-            f'WORK    = r"{work}"\n'
+            # Derived at run time from the notebook's own location so the
+            # notebook works in any checkout, and carries no absolute path.
+            f'NB_DIR  = os.getcwd()                       # <crate>/notebooks\n'
+            f'ROOT    = os.path.dirname(os.path.dirname(NB_DIR))\n'
+            f'CRATE   = os.path.join(ROOT, "{crate_name}")\n'
+            f'WORK    = os.path.join(CRATE, "porttest")\n'
+            f'if not os.path.exists(os.path.join(CRATE, "Cargo.toml")):\n'
+            f'    raise SystemExit(\n'
+            f'        "Could not find the crate. Run this notebook from "\n'
+            f'        "the notebooks folder of a full checkout: " + CRATE)\n'
             f'# The example that is BUILT and RUN. It is usually the one the\n'
             f'# notebook is named after; where it differs (the stock\n'
             f'# shearing_sheet integrates forever by design) the terminating\n'

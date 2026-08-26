@@ -9,6 +9,13 @@ yourself. It is written for someone who has never done this before. Every
 command you need is printed in full. You will not have to look anything up in
 another document.
 
+> **A note on `C:\work` in the commands below.** `C:\work` is a stand-in for
+> whatever folder you put this project in — it is not a real folder, and you do
+> not have to create one with that name. If your copy lives in
+> `C:\Users\Sam\astronomy`, then read every `C:\work\...` below as
+> `C:\Users\Sam\astronomy\...`. Only that leading part changes; the folder
+> names after it are real and must match.
+
 ---
 
 ## Table of contents
@@ -162,14 +169,14 @@ that we compare against.
 ### 6a. Get the source code
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0
+cd C:\work
 git clone https://github.com/hannorein/rebound.git rebound\rebound
 ```
 
 ### 6b. Compile it
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound\rebound\examples\shearing_sheet
+cd C:\work\rebound\rebound\examples\shearing_sheet
 cmd /c 'set PATH=C:\Program Files (x86)\GnuWin32\bin;%PATH% && "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && make'
 ```
 
@@ -213,7 +220,7 @@ is the stock example with exactly three changes, listed at the top of that file.
 Build it:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /I"..\..\rebound\rebound\src" /D_GNU_SOURCE /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /Ox /fp:precise problem_test.c librebound.lib /Fe:rebound_test.exe'
 ```
 
@@ -222,7 +229,7 @@ cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxilia
 ## 7. Step 2 — Build the Rust program
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example shearing_sheet_test
 ```
 
@@ -241,7 +248,7 @@ every warning into a hard error. It uses **no third-party libraries at all**.
 Run each program for 400 time steps:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust\porttest
+cd C:\work\rebound_rust\porttest
 .\rebound_test.exe 400
 ..\target\release\examples\shearing_sheet_test.exe 400
 ```
@@ -344,7 +351,7 @@ We wrote a test that calls each maths function 200,000 times in both C and Rust
 and compares the raw bits:
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example libm_diff
 cd porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /Ox /fp:precise libm_diff.c /Fe:libm_diff.exe'
@@ -404,7 +411,7 @@ We then tested `pow` with exactly the arguments that step-size chooser uses
 (200,000 samples):
 
 ```bash
-cd C:\Users\nsh\Developer\github\rustSolveIt_Win11_SUNDIALS_7_8_0\rebound_rust
+cd C:\work\rebound_rust
 cargo build --release --example bs_pow_diff
 cd porttest
 cmd /c '"C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat" >nul && cl /nologo /Ox /fp:precise bs_pow_diff.c /Fe:bs_pow_diff.exe'
