@@ -390,7 +390,13 @@ def build(name, spec):
            f"```\n"
            f"cd {crate_name}\n"
            f"cargo build --release --example {runs}\n"
-           f"cd {work}\n"
+           # Relative, because the block has already cd'd into the crate.
+           # An absolute path here would bake this machine's directory
+           # layout, and its username, into every generated notebook -
+           # which is exactly what happened before, and was only caught
+           # because regenerating reintroduced a path a text sweep had
+           # already removed from the committed files.
+           f"cd porttest\n"
            f"{cmdline}\n"
            f"```"),
         code(
